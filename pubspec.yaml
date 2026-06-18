@@ -1,0 +1,118 @@
+name: supri
+description: "A new Flutter project."
+# The following line prevents the package from being accidentally published to
+# pub.dev using `flutter pub publish`. This is preferred for private packages.
+publish_to: "none" # Remove this line if you wish to publish to pub.dev
+
+# The following defines the version and build number for your application.
+version: 1.0.0+1
+
+environment:
+  sdk: ^3.10.8
+
+# Dependencies specify other packages that your package needs in order to work.
+dependencies:
+  flutter:
+    sdk: flutter
+
+  cupertino_icons: ^1.0.8
+
+  # Firebase
+  # firebase_core: ^3.3.0
+
+  # Typography
+  google_fonts: ^6.2.1
+
+  # Animation & Transition
+  flutter_animate: ^4.5.0
+  lottie: ^3.3.2
+
+  # Cache & Temporary Storage
+  cached_network_image: ^3.4.1
+
+  # Calendar
+  # table_calendar: ^3.2.0
+
+  # Carousel or Cover Flow
+  # carousel_indicator: ^1.0.6
+  # carousel_slider: ^5.1.1
+  smooth_page_indicator: ^2.0.1
+
+  # Code Generator & Serialization (JSON)
+  # flutter_gen: ^5.12.0
+  # freezed_annotation: any
+
+  # QR
+  # pretty_qr_code: ^3.6.0
+
+  # Gallery & Image Processing
+  # gal: ^2.3.2
+  image: ^4.3.0
+
+  # Date & Time Utilities
+  # flutter_timezone: ^5.0.1
+  timeago: ^3.7.1
+
+  # Dependency Injection & State Management
+  # bloc: ^9.1.0
+  flutter_bloc: ^9.1.1
+
+  # Functional Programming & DI
+  get_it: ^8.0.3
+  dartz: ^0.10.1
+  equatable: ^2.0.7
+
+  # Developer Tools
+  # flutter_dotenv: ^6.0.0
+
+  # File, Folder & Path Utilities
+  # flutter_downloader: ^1.12.0
+  path_provider: ^2.1.5
+
+  # Flutter Framework
+  # flutter_modular: ^6.4.1
+
+  # Layout & Responsiveness
+  flutter_screenutil: ^5.9.3
+  gap: ^3.0.1
+
+  # Image
+  flutter_svg: ^2.2.3
+
+  # Indicators: Loading, Refresh, Progress
+  flutter_spinkit: ^5.2.2
+  # loader_overlay: ^5.0.0
+  shimmer: ^3.0.0
+
+  # Sharing & Intent
+  # share_plus: ^12.0.1
+  url_launcher: ^6.3.2
+
+dev_dependencies:
+  flutter_test:
+    sdk: flutter
+
+  # Linter
+  flutter_lints: ^5.0.0
+
+  # Developer Tools
+  # build_runner: ^2.4.13
+
+flutter:
+  uses-material-design: true
+  assets:
+    - assets/images/
+    - assets/fonts/
+    - assets/icons/
+    - assets/lottie/
+  fonts:
+    - family: Poppins
+      fonts:
+        - asset: assets/fonts/Poppins-Regular.ttf
+          weight: 400
+        - asset: assets/fonts/Poppins-Medium.ttf
+          weight: 500
+        - asset: assets/fonts/Poppins-SemiBold.ttf
+          weight: 600
+        - asset: assets/fonts/Poppins-Bold.ttf
+          weight: 700
