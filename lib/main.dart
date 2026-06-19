@@ -4,9 +4,6 @@ import 'package:flutter_bloc/flutter_bloc.dart';
 import 'core/theme/app_theme.dart';
 import 'features/auth/presentation/bloc/auth_bloc.dart';
 import 'features/auth/presentation/bloc/auth_event.dart';
-import 'features/auth/presentation/bloc/auth_state.dart';
-import 'features/auth/presentation/pages/login_page.dart';
-import 'features/auth/presentation/pages/outlet_selection_page.dart';
 import 'features/sales/presentation/bloc/sales_bloc.dart';
 import 'features/sales/presentation/pages/sales_page.dart';
 import 'features/settings/presentation/pages/rekap_page.dart';
@@ -46,28 +43,8 @@ class AppNavigator extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
-    return BlocBuilder<AuthBloc, AuthState>(
-      builder: (context, state) {
-        if (state is AuthInitial || state is AuthLoading) {
-          return const Scaffold(
-            body: Center(child: CircularProgressIndicator()),
-          );
-        }
-
-        if (state is AuthUnauthenticated) {
-          return const LoginPage();
-        }
-
-        if (state is AuthAuthenticated) {
-          if (state.needsOutletSelection) {
-            return const OutletSelectionPage();
-          }
-          return MainNavigator(initialIndex: 0);
-        }
-
-        return const LoginPage();
-      },
-    );
+    // Skip login - go directly to main app with static data
+    return MainNavigator(initialIndex: 0);
   }
 }
 
@@ -117,6 +94,7 @@ class _MainNavigatorState extends State<MainNavigator> {
         onTap: _onTabTapped,
         selectedItemColor: Theme.of(context).primaryColor,
         unselectedItemColor: Colors.grey,
+        type: BottomNavigationBarType.fixed,
         items: const [
           BottomNavigationBarItem(
             icon: Icon(Icons.point_of_sale),

@@ -1,111 +1,96 @@
 import 'package:flutter_bloc/flutter_bloc.dart';
 
 import '../../domain/entities/product_entity.dart';
+import '../../domain/repositories/product_repository.dart';
 import 'sales_event.dart';
 import 'sales_state.dart';
 
 /// Sales BLoC for managing POS/sales state.
 class SalesBloc extends Bloc<SalesEvent, SalesState> {
-  List<ProductEntity> _products = [];
+  final ProductRepository repository;
   CartEntity _cart = const CartEntity();
+  List<ProductEntity> _products = [];
 
-  SalesBloc() : super(const SalesInitial()) {
+  SalesBloc({required this.repository}) : super(SalesInitial()) {
     on<LoadProductsEvent>(_onLoadProducts);
-    on<SearchProductsEvent>(_onSearchProducts);
-    on<FilterCategoryEvent>(_onFilterCategory);
     on<AddToCartEvent>(_onAddToCart);
+    on<UpdateCartQuantityEvent>(_onUpdateCartQuantity);
     on<RemoveFromCartEvent>(_onRemoveFromCart);
-    on<UpdateQuantityEvent>(_onUpdateQuantity);
     on<ClearCartEvent>(_onClearCart);
     on<ApplyDiscountEvent>(_onApplyDiscount);
     on<SetCustomerEvent>(_onSetCustomer);
-    on<SetPriceTypeEvent>(_onSetPriceType);
     on<HoldTransactionEvent>(_onHoldTransaction);
   }
 
   Future<void> _onLoadProducts(LoadProductsEvent event, Emitter<SalesState> emit) async {
-    emit(const SalesLoading());
-
-    // Mock products data
-    _products = [
-      const ProductEntity(id: '1', name: 'Ayam Geprek', price: 15000, category: 'Food'),
-      const ProductEntity(id: '2', name: 'Bakso Goreng', price: 12000, category: 'Food'),
-      const ProductEntity(id: '3', name: 'Es Jeruk', price: 6000, category: 'Drinks'),
-      const ProductEntity(id: '4', name: 'Es Podjok', price: 5000, category: 'Drinks'),
-      const ProductEntity(id: '5', name: 'Es Teh Manis', price: 4000, category: 'Drinks'),
-      const ProductEntity(id: '6', name: 'Es Teh', price: 3000, category: 'Drinks'),
-      const ProductEntity(id: '7', name: 'Nasi Putih', price: 5000, category: 'Rice'),
-      const ProductEntity(id: '8', name: 'Nasi Goreng', price: 15000, category: 'Rice'),
-      const ProductEntity(id: '9', name: 'Beras 5kg', price: 75000, category: 'Bahan Baku'),
-      const ProductEntity(id: '10', name: 'Adonan Martabak', price: 10000, category: 'Bahan Baku'),
-      const ProductEntity(id: '11', name: 'Es Degan', price: 8000, category: 'Drinks'),
-      const ProductEntity(id: '12', name: 'Es Podjok', price: 5000, category: 'Drinks'),
-    ];
-
-    _cart = const CartEntity();
-
-    emit(SalesLoaded(
-      products: _products,
-      filteredProducts: _products,
-      cart: _cart,
-    ));
-  }
-
-  void _onSearchProducts(SearchProductsEvent event, Emitter<SalesState> emit) {
-    if (state is SalesLoaded) {
-      final currentState = state as SalesLoaded;
-      final query = event.query.toLowerCase();
-
-      final filtered = _products.where((p) {
-        final matchesSearch = p.name.toLowerCase().contains(query);
-        final matchesCategory = currentState.selectedCategory == null ||
-            p.category == currentState.selectedCategory;
-        return matchesSearch && matchesCategory;
-      }).toList();
-
-      emit(currentState.copyWith(
-        filteredProducts: filtered,
-        searchQuery: event.query,
+    emit(SalesLoading());
+    try {
+      _products = await repository.getProducts();
+      emit(SalesLoaded(
+        products: _products,
+        filteredProducts: _products,
+        cart: _cart,
       ));
-    }
-  }
-
-  void _onFilterCategory(FilterCategoryEvent event, Emitter<SalesState> emit) {
-    if (state is SalesLoaded) {
-      final currentState = state as SalesLoaded;
-      final query = currentState.searchQuery.toLowerCase();
-
-      final filtered = _products.where((p) {
-        final matchesSearch = query.isEmpty || p.name.toLowerCase().contains(query);
-        final matchesCategory = event.category == null || p.category == event.category;
-        return matchesSearch && matchesCategory;
-      }).toList();
-
-      emit(currentState.copyWith(
-        filteredProducts: filtered,
-        selectedCategory: event.category,
-      ));
+    } catch (e) {
+      emit(SalesError(e.toString()));
     }
   }
 
   void _onAddToCart(AddToCartEvent event, Emitter<SalesState> emit) {
     if (state is SalesLoaded) {
       final currentState = state as SalesLoaded;
-      final product = _products.firstWhere((p) => p.id == event.productId);
-
       final existingIndex = _cart.items.indexWhere((i) => i.product.id == event.productId);
 
       List<CartItemEntity> newItems;
       if (existingIndex >= 0) {
-        newItems = List.from(_cart.items);
-        final existing = newItems[existingIndex];
-        newItems[existingIndex] = existing.copyWith(quantity: existing.quantity + 1);
+        // Merge: increment quantity of existing item
+        newItems = [..._cart.items];
+        final existingItem = newItems[existingIndex];
+        newItems[existingIndex] = CartItemEntity(
+          product: existingItem.product,
+          quantity: existingItem.quantity + 1,
+        );
       } else {
-        newItems = [..._cart.items, CartItemEntity(product: product, quantity: 1)];
+        // Find product and add new item
+        final product = _products.firstWhere(
+          (p) => p.id == event.productId,
+          orElse: () => ProductEntity(
+            id: event.productId,
+            name: 'Unknown',
+            price: 0,
+            category: 'Other',
+          ),
+        );
+        newItems = [
+          ..._cart.items,
+          CartItemEntity(product: product, quantity: 1),
+        ];
       }
 
       _cart = _cart.copyWith(items: newItems);
       emit(currentState.copyWith(cart: _cart));
+    }
+  }
+
+  void _onUpdateCartQuantity(UpdateCartQuantityEvent event, Emitter<SalesState> emit) {
+    if (state is SalesLoaded) {
+      final currentState = state as SalesLoaded;
+      final existingIndex = _cart.items.indexWhere((i) => i.product.id == event.productId);
+
+      if (existingIndex >= 0) {
+        final newItems = [..._cart.items];
+        final existingItem = newItems[existingIndex];
+        if (event.quantity <= 0) {
+          newItems.removeAt(existingIndex);
+        } else {
+          newItems[existingIndex] = CartItemEntity(
+            product: existingItem.product,
+            quantity: event.quantity,
+          );
+        }
+        _cart = _cart.copyWith(items: newItems);
+        emit(currentState.copyWith(cart: _cart));
+      }
     }
   }
 
@@ -113,27 +98,6 @@ class SalesBloc extends Bloc<SalesEvent, SalesState> {
     if (state is SalesLoaded) {
       final currentState = state as SalesLoaded;
       final newItems = _cart.items.where((i) => i.product.id != event.productId).toList();
-      _cart = _cart.copyWith(items: newItems);
-      emit(currentState.copyWith(cart: _cart));
-    }
-  }
-
-  void _onUpdateQuantity(UpdateQuantityEvent event, Emitter<SalesState> emit) {
-    if (state is SalesLoaded) {
-      final currentState = state as SalesLoaded;
-
-      if (event.quantity <= 0) {
-        add(RemoveFromCartEvent(event.productId));
-        return;
-      }
-
-      final newItems = _cart.items.map((item) {
-        if (item.product.id == event.productId) {
-          return item.copyWith(quantity: event.quantity);
-        }
-        return item;
-      }).toList();
-
       _cart = _cart.copyWith(items: newItems);
       emit(currentState.copyWith(cart: _cart));
     }
@@ -167,19 +131,10 @@ class SalesBloc extends Bloc<SalesEvent, SalesState> {
     }
   }
 
-  void _onSetPriceType(SetPriceTypeEvent event, Emitter<SalesState> emit) {
-    if (state is SalesLoaded) {
-      final currentState = state as SalesLoaded;
-      _cart = _cart.copyWith(priceType: event.priceType);
-      emit(currentState.copyWith(cart: _cart));
-    }
-  }
-
   void _onHoldTransaction(HoldTransactionEvent event, Emitter<SalesState> emit) {
     if (state is SalesLoaded) {
       final currentState = state as SalesLoaded;
       emit(SalesHeld(_cart));
-      // Reset to loaded state with empty cart
       _cart = const CartEntity();
       emit(currentState.copyWith(cart: _cart));
     }

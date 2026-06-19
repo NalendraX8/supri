@@ -1,12 +1,21 @@
 import 'package:flutter_bloc/flutter_bloc.dart';
 
-import '../../domain/entities/auth_entity.dart';
+import '../../domain/repositories/auth_repository.dart';
 import 'auth_event.dart';
 import 'auth_state.dart';
 
 /// Auth BLoC for managing authentication state.
 class AuthBloc extends Bloc<AuthEvent, AuthState> {
-  AuthBloc() : super(const AuthInitial()) {
+  final AuthRepository repository;
+
+  // Static outlets (can be fetched from API)
+  static const List<Map<String, String>> outlets = [
+    {'id': '1', 'name': 'Toko Utama'},
+    {'id': '2', 'name': 'Cabang Selatan'},
+    {'id': '3', 'name': 'Cabang Timur'},
+  ];
+
+  AuthBloc({required this.repository}) : super(const AuthInitial()) {
     on<LoginEvent>(_onLogin);
     on<LogoutEvent>(_onLogout);
     on<SelectOutletEvent>(_onSelectOutlet);
@@ -14,24 +23,15 @@ class AuthBloc extends Bloc<AuthEvent, AuthState> {
 
   Future<void> _onLogin(LoginEvent event, Emitter<AuthState> emit) async {
     emit(const AuthLoading());
-
-    // Simulate API call
-    await Future.delayed(const Duration(seconds: 1));
-
-    // Mock successful login - user needs to select outlet next
-    final auth = AuthEntity(
-      userId: 'user_001',
-      email: event.email,
-      isLoggedIn: true,
-      // Mock outlets for demo
-    );
-
-    emit(AuthAuthenticated(auth: auth, needsOutletSelection: true));
+    try {
+      final auth = await repository.login(event.email, event.password);
+      emit(AuthAuthenticated(auth: auth, needsOutletSelection: false));
+    } catch (e) {
+      emit(AuthError(e.toString()));
+    }
   }
 
-  Future<void> _onLogout(LogoutEvent event, Emitter<AuthState> emit) async {
-    emit(const AuthLoading());
-    await Future.delayed(const Duration(milliseconds: 500));
+  void _onLogout(LogoutEvent event, Emitter<AuthState> emit) {
     emit(const AuthUnauthenticated());
   }
 

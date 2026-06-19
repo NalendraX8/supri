@@ -2,6 +2,16 @@ import 'package:flutter/material.dart';
 
 import '../../../../core/theme/app_colors.dart';
 
+const _selectedLabelStyle = TextStyle(
+  color: AppColors.textOnPrimary,
+  fontWeight: FontWeight.w500,
+);
+
+const _unselectedLabelStyle = TextStyle(
+  color: AppColors.textPrimary,
+  fontWeight: FontWeight.w500,
+);
+
 /// Category filter chips widget.
 class CategoryChips extends StatelessWidget {
   final String? selectedCategory;
@@ -43,10 +53,7 @@ class CategoryChips extends StatelessWidget {
             },
             backgroundColor: AppColors.grey100,
             selectedColor: AppColors.primary,
-            labelStyle: TextStyle(
-              color: isSelected ? AppColors.textOnPrimary : AppColors.textPrimary,
-              fontWeight: FontWeight.w500,
-            ),
+            labelStyle: isSelected ? _selectedLabelStyle : _unselectedLabelStyle,
             checkmarkColor: AppColors.textOnPrimary,
             shape: RoundedRectangleBorder(
               borderRadius: BorderRadius.circular(20),

@@ -3,6 +3,28 @@ import 'package:flutter/material.dart';
 import '../../../../core/theme/app_colors.dart';
 import '../../domain/entities/product_entity.dart';
 
+final _currencyPattern = RegExp(r'(\d{1,3})(?=(\d{3})+(?!\d))');
+
+String _formatPrice(double price) {
+  return 'IDR ${price.toStringAsFixed(0).replaceAllMapped(
+        _currencyPattern,
+        (Match m) => '${m[1]}.',
+      )}';
+}
+
+IconData _getCategoryIcon(String category) {
+  switch (category.toLowerCase()) {
+    case 'food':
+      return Icons.restaurant;
+    case 'drinks':
+      return Icons.local_cafe;
+    case 'rice':
+      return Icons.rice_bowl;
+    default:
+      return Icons.inventory_2;
+  }
+}
+
 /// Product card widget for the product grid.
 class ProductCard extends StatelessWidget {
   final ProductEntity product;
@@ -31,9 +53,9 @@ class ProductCard extends StatelessWidget {
             Expanded(
               flex: 3,
               child: Container(
-                decoration: BoxDecoration(
+                decoration: const BoxDecoration(
                   color: AppColors.grey100,
-                  borderRadius: const BorderRadius.vertical(
+                  borderRadius: BorderRadius.vertical(
                     top: Radius.circular(12),
                   ),
                 ),
@@ -81,25 +103,5 @@ class ProductCard extends StatelessWidget {
         ),
       ),
     );
-  }
-
-  IconData _getCategoryIcon(String category) {
-    switch (category.toLowerCase()) {
-      case 'food':
-        return Icons.restaurant;
-      case 'drinks':
-        return Icons.local_cafe;
-      case 'rice':
-        return Icons.rice_bowl;
-      default:
-        return Icons.inventory_2;
-    }
-  }
-
-  String _formatPrice(double price) {
-    return 'IDR ${price.toStringAsFixed(0).replaceAllMapped(
-          RegExp(r'(\d{1,3})(?=(\d{3})+(?!\d))'),
-          (Match m) => '${m[1]}.',
-        )}';
   }
 }

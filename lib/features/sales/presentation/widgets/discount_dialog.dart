@@ -1,14 +1,12 @@
 import 'package:flutter/material.dart';
-import 'package:flutter_bloc/flutter_bloc.dart';
 
 import '../../../../core/theme/app_colors.dart';
-import '../../../../core/widgets/app_text_field.dart';
-import '../bloc/sales_bloc.dart';
-import '../bloc/sales_event.dart';
 
 /// Discount dialog for applying discounts.
 class DiscountDialog extends StatefulWidget {
-  const DiscountDialog({super.key});
+  final Function(double? percent, double? value, bool isPercent) onApply;
+
+  const DiscountDialog({super.key, required this.onApply});
 
   @override
   State<DiscountDialog> createState() => _DiscountDialogState();
@@ -26,15 +24,11 @@ class _DiscountDialogState extends State<DiscountDialog> {
 
   void _onSave() {
     final amount = double.tryParse(_amountController.text) ?? 0;
-
-    context.read<SalesBloc>().add(
-          ApplyDiscountEvent(
-            percent: _isPercent ? amount : null,
-            value: !_isPercent ? amount : null,
-            isPercent: _isPercent,
-          ),
-        );
-
+    widget.onApply(
+      _isPercent ? amount : null,
+      !_isPercent ? amount : null,
+      _isPercent,
+    );
     Navigator.pop(context);
   }
 
@@ -65,11 +59,13 @@ class _DiscountDialogState extends State<DiscountDialog> {
           ),
           const SizedBox(height: 16),
           // Amount input
-          AppTextField(
+          TextField(
             controller: _amountController,
-            hintText: 'Amount',
+            decoration: const InputDecoration(
+              hintText: 'Amount',
+              prefixIcon: Icon(Icons.attach_money),
+            ),
             keyboardType: TextInputType.number,
-            prefixIcon: Icons.attach_money,
           ),
         ],
       ),

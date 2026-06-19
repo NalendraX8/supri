@@ -1,8 +1,9 @@
+import 'dart:async';
+
 import 'package:flutter/material.dart';
 import 'package:flutter_bloc/flutter_bloc.dart';
 
 import '../../../../core/theme/app_colors.dart';
-import '../../../../core/widgets/app_text_field.dart';
 import '../../domain/entities/product_entity.dart';
 import '../bloc/sales_bloc.dart';
 import '../bloc/sales_event.dart';
@@ -13,7 +14,7 @@ import '../widgets/category_chips.dart';
 import '../widgets/discount_dialog.dart';
 import '../widgets/product_card.dart';
 
-/// Main Sales/Home page - the primary POS screen.
+/// Main Sales/Home page - the primary POS screen with static data.
 class SalesPage extends StatefulWidget {
   final VoidCallback? onNavigateToHistory;
   final VoidCallback? onNavigateToKas;
@@ -37,29 +38,74 @@ class SalesPage extends StatefulWidget {
 class _SalesPageState extends State<SalesPage> {
   final _searchController = TextEditingController();
   final _scaffoldKey = GlobalKey<ScaffoldState>();
+  Timer? _debounceTimer;
+
+  // Static product data (fallback when API unavailable)
+  static const List<ProductEntity> _fallbackProducts = [
+    ProductEntity(id: '1', name: 'Ayam Geprek', price: 15000, category: 'Food'),
+    ProductEntity(id: '2', name: 'Bakso Goreng', price: 12000, category: 'Food'),
+    ProductEntity(id: '3', name: 'Es Jeruk', price: 6000, category: 'Drinks'),
+    ProductEntity(id: '4', name: 'Es Podjok', price: 5000, category: 'Drinks'),
+    ProductEntity(id: '5', name: 'Es Teh Manis', price: 4000, category: 'Drinks'),
+    ProductEntity(id: '6', name: 'Es Teh', price: 3000, category: 'Drinks'),
+    ProductEntity(id: '7', name: 'Nasi Putih', price: 5000, category: 'Rice'),
+    ProductEntity(id: '8', name: 'Nasi Goreng', price: 15000, category: 'Rice'),
+    ProductEntity(id: '9', name: 'Beras 5kg', price: 75000, category: 'Bahan Baku'),
+    ProductEntity(id: '10', name: 'Adonan Martabak', price: 10000, category: 'Bahan Baku'),
+    ProductEntity(id: '11', name: 'Es Degan', price: 8000, category: 'Drinks'),
+    ProductEntity(id: '12', name: 'Mie Goreng', price: 13000, category: 'Food'),
+  ];
 
   @override
   void initState() {
     super.initState();
+    // Load products from API
     context.read<SalesBloc>().add(const LoadProductsEvent());
   }
+
+  List<ProductEntity> _filteredProducts = [];
+  String? _selectedCategory;
+  String _searchQuery = '';
 
   @override
   void dispose() {
     _searchController.dispose();
+    _debounceTimer?.cancel();
     super.dispose();
   }
 
   void _onSearch(String query) {
-    context.read<SalesBloc>().add(SearchProductsEvent(query));
+    _debounceTimer?.cancel();
+    _debounceTimer = Timer(const Duration(milliseconds: 300), () {
+      setState(() {
+        _searchQuery = query;
+        _filterProducts();
+      });
+    });
   }
 
   void _onCategorySelected(String? category) {
-    context.read<SalesBloc>().add(FilterCategoryEvent(category));
+    setState(() {
+      _selectedCategory = category;
+      _filterProducts();
+    });
   }
 
-  void _onProductTap(String productId) {
-    context.read<SalesBloc>().add(AddToCartEvent(productId));
+  void _filterProducts() {
+    final bloc = context.read<SalesBloc>();
+    final products = bloc.state is SalesLoaded
+        ? (bloc.state as SalesLoaded).products
+        : _fallbackProducts;
+
+    final query = _searchQuery.toLowerCase();
+    _filteredProducts = products.where((p) {
+      if (_selectedCategory != null && p.category != _selectedCategory) return false;
+      return query.isEmpty || p.name.toLowerCase().contains(query);
+    }).toList();
+  }
+
+  void _onProductTap(ProductEntity product) {
+    context.read<SalesBloc>().add(AddToCartEvent(product.id));
   }
 
   void _showCartDetail(CartEntity cart) {
@@ -67,89 +113,62 @@ class _SalesPageState extends State<SalesPage> {
       context: context,
       isScrollControlled: true,
       backgroundColor: Colors.transparent,
-      builder: (context) => DraggableScrollableSheet(
-        initialChildSize: 0.7,
-        minChildSize: 0.5,
-        maxChildSize: 0.95,
-        builder: (_, controller) => CartDetailSheet(
-          cart: cart,
-          onUpdateQuantity: (id) {
-            final item = cart.items.firstWhere((i) => i.product.id == id);
-            context.read<SalesBloc>().add(UpdateQuantityEvent(id, item.quantity + 1));
-          },
-          onRemoveItem: (id) {
-            context.read<SalesBloc>().add(RemoveFromCartEvent(id));
-          },
-          onClearCart: () {
-            Navigator.pop(context);
-            _showClearConfirmDialog();
-          },
-          onHold: () {
-            Navigator.pop(context);
-            _showHoldConfirmDialog();
-          },
-          onPayment: () {
-            Navigator.pop(context);
-            // TODO: Navigate to payment screen
-            ScaffoldMessenger.of(context).showSnackBar(
-              const SnackBar(content: Text('Payment screen coming soon')),
+      builder: (ctx) => BlocProvider.value(
+        value: context.read<SalesBloc>(),
+        child: BlocBuilder<SalesBloc, SalesState>(
+          builder: (blocCtx, state) {
+            final currentCart = state is SalesLoaded ? state.cart : const CartEntity();
+            return CartDetailSheet(
+              cart: currentCart,
+              onUpdateQuantity: (productId) {
+                blocCtx.read<SalesBloc>().add(AddToCartEvent(productId));
+              },
+              onRemoveItem: (productId) {
+                blocCtx.read<SalesBloc>().add(RemoveFromCartEvent(productId));
+              },
+              onClearCart: () {
+                Navigator.pop(ctx);
+                blocCtx.read<SalesBloc>().add(const ClearCartEvent());
+              },
+              onHold: () {
+                Navigator.pop(ctx);
+                _showHoldDialog();
+              },
+              onPayment: () {
+                Navigator.pop(ctx);
+                _showPaymentDialog();
+              },
+              onCustomerTap: () {
+                Navigator.pop(ctx);
+                _showCustomerDialog();
+              },
+              onDiscountTap: () {
+                Navigator.pop(ctx);
+                _showDiscountDialog();
+              },
             );
-          },
-          onCustomerTap: () {
-            Navigator.pop(context);
-            _showCustomerDialog();
-          },
-          onDiscountTap: () {
-            Navigator.pop(context);
-            _showDiscountDialog();
           },
         ),
       ),
     );
   }
 
-  void _showClearConfirmDialog() {
+  void _showHoldDialog() {
     showDialog(
       context: context,
-      builder: (context) => AlertDialog(
-        title: const Text('Alert'),
-        content: const Text('Clear all items from cart?'),
-        actions: [
-          TextButton(
-            onPressed: () => Navigator.pop(context),
-            child: const Text('CANCEL'),
-          ),
-          ElevatedButton(
-            onPressed: () {
-              Navigator.pop(context);
-              context.read<SalesBloc>().add(const ClearCartEvent());
-            },
-            style: ElevatedButton.styleFrom(
-              backgroundColor: AppColors.error,
-            ),
-            child: const Text('OK'),
-          ),
-        ],
-      ),
-    );
-  }
-
-  void _showHoldConfirmDialog() {
-    showDialog(
-      context: context,
-      builder: (context) => AlertDialog(
+      builder: (ctx) => AlertDialog(
         title: const Text('Alert'),
         content: const Text(
           'Displaying hold transaction data will delete the currently inputted item data.',
         ),
         actions: [
           TextButton(
-            onPressed: () => Navigator.pop(context),
+            onPressed: () => Navigator.pop(ctx),
             child: const Text('CANCEL'),
           ),
           ElevatedButton(
             onPressed: () {
-              Navigator.pop(context);
+              Navigator.pop(ctx);
               context.read<SalesBloc>().add(const HoldTransactionEvent());
               ScaffoldMessenger.of(context).showSnackBar(
                 const SnackBar(content: Text('Transaction held')),
@@ -162,26 +181,92 @@ class _SalesPageState extends State<SalesPage> {
     );
   }
 
+  void _showPaymentDialog() {
+    showDialog(
+      context: context,
+      builder: (ctx) => AlertDialog(
+        title: const Text('Payment'),
+        content: Column(
+          mainAxisSize: MainAxisSize.min,
+          children: [
+            ListTile(
+              leading: const Icon(Icons.qr_code),
+              title: const Text('QRIS'),
+              onTap: () {
+                Navigator.pop(ctx);
+                _showSuccessDialog();
+              },
+            ),
+            ListTile(
+              leading: const Icon(Icons.money),
+              title: const Text('Cash'),
+              onTap: () {
+                Navigator.pop(ctx);
+                _showSuccessDialog();
+              },
+            ),
+          ],
+        ),
+        actions: [
+          TextButton(
+            onPressed: () => Navigator.pop(ctx),
+            child: const Text('CANCEL'),
+          ),
+        ],
+      ),
+    );
+  }
+
+  void _showSuccessDialog() {
+    showDialog(
+      context: context,
+      barrierDismissible: false,
+      builder: (ctx) => AlertDialog(
+        title: const Row(
+          children: [
+            Icon(Icons.check_circle, color: AppColors.success, size: 32),
+            SizedBox(width: 8),
+            Text('Success'),
+          ],
+        ),
+        content: const Text('Payment completed successfully!'),
+        actions: [
+          ElevatedButton(
+            onPressed: () {
+              Navigator.pop(ctx);
+              context.read<SalesBloc>().add(const ClearCartEvent());
+            },
+            child: const Text('DONE'),
+          ),
+        ],
+      ),
+    );
+  }
+
   void _showCustomerDialog() {
     final controller = TextEditingController();
     showDialog(
       context: context,
-      builder: (context) => AlertDialog(
+      builder: (ctx) => AlertDialog(
         title: const Text('Customer'),
-        content: AppTextField(
+        content: TextField(
           controller: controller,
-          hintText: 'Customer name',
-          prefixIcon: Icons.person_outline,
+          decoration: const InputDecoration(
+            hintText: 'Customer name',
+            prefixIcon: Icon(Icons.person_outline),
+          ),
         ),
         actions: [
           TextButton(
-            onPressed: () => Navigator.pop(context),
+            onPressed: () => Navigator.pop(ctx),
             child: const Text('CANCEL'),
           ),
           ElevatedButton(
             onPressed: () {
-              Navigator.pop(context);
-              context.read<SalesBloc>().add(SetCustomerEvent(controller.text));
+              Navigator.pop(ctx);
+              context
+                  .read<SalesBloc>()
+                  .add(SetCustomerEvent(controller.text));
             },
             child: const Text('SAVE'),
           ),
@@ -193,7 +278,15 @@ class _SalesPageState extends State<SalesPage> {
   void _showDiscountDialog() {
     showDialog(
       context: context,
-      builder: (context) => const DiscountDialog(),
+      builder: (ctx) => DiscountDialog(
+        onApply: (percent, value, isPercent) {
+          context.read<SalesBloc>().add(ApplyDiscountEvent(
+                percent: percent,
+                value: value,
+                isPercent: isPercent,
+              ));
+        },
+      ),
     );
   }
 
@@ -233,82 +326,62 @@ class _SalesPageState extends State<SalesPage> {
       drawer: _buildDrawer(),
       body: BlocBuilder<SalesBloc, SalesState>(
         builder: (context, state) {
-          if (state is SalesLoading) {
-            return const Center(child: CircularProgressIndicator());
-          }
+          final cart = state is SalesLoaded ? state.cart : const CartEntity();
 
-          if (state is SalesError) {
-            return Center(
-              child: Column(
-                mainAxisAlignment: MainAxisAlignment.center,
-                children: [
-                  const Icon(Icons.error_outline, size: 64, color: AppColors.error),
-                  const SizedBox(height: 16),
-                  Text(state.message),
-                  const SizedBox(height: 16),
-                  ElevatedButton(
-                    onPressed: () => context.read<SalesBloc>().add(const LoadProductsEvent()),
-                    child: const Text('Retry'),
-                  ),
-                ],
-              ),
-            );
-          }
-
-          if (state is SalesLoaded) {
-            return Column(
-              children: [
-                // Search bar
-                Padding(
-                  padding: const EdgeInsets.all(16),
-                  child: AppTextField(
-                    controller: _searchController,
+          return Column(
+            children: [
+              // Search bar
+              Padding(
+                padding: const EdgeInsets.all(16),
+                child: TextField(
+                  controller: _searchController,
+                  decoration: InputDecoration(
                     hintText: 'Search Item',
-                    prefixIcon: Icons.search,
-                    onChanged: _onSearch,
+                    prefixIcon: const Icon(Icons.search),
+                    filled: true,
+                    fillColor: AppColors.surface,
+                    border: OutlineInputBorder(
+                      borderRadius: BorderRadius.circular(8),
+                      borderSide: BorderSide.none,
+                    ),
                   ),
+                  onChanged: _onSearch,
                 ),
-                // Category chips
-                CategoryChips(
-                  selectedCategory: state.selectedCategory,
-                  onCategorySelected: _onCategorySelected,
+              ),
+              // Category chips
+              CategoryChips(
+                selectedCategory: _selectedCategory,
+                onCategorySelected: _onCategorySelected,
+              ),
+              const SizedBox(height: 16),
+              // Product grid
+              Expanded(
+                child: GridView.builder(
+                  padding: const EdgeInsets.all(16),
+                  gridDelegate: const SliverGridDelegateWithFixedCrossAxisCount(
+                    crossAxisCount: 3,
+                    childAspectRatio: 0.75,
+                    crossAxisSpacing: 12,
+                    mainAxisSpacing: 12,
+                  ),
+                  itemCount: _filteredProducts.length,
+                  itemBuilder: (context, index) {
+                    final product = _filteredProducts[index];
+                    return ProductCard(
+                      product: product,
+                      onTap: () => _onProductTap(product),
+                    );
+                  },
                 ),
-                const SizedBox(height: 16),
-                // Product grid
-                Expanded(
-                  child: state.filteredProducts.isEmpty
-                      ? const Center(
-                          child: Text('No products found'),
-                        )
-                      : GridView.builder(
-                          padding: const EdgeInsets.all(16),
-                          gridDelegate: const SliverGridDelegateWithFixedCrossAxisCount(
-                            crossAxisCount: 3,
-                            childAspectRatio: 0.75,
-                            crossAxisSpacing: 12,
-                            mainAxisSpacing: 12,
-                          ),
-                          itemCount: state.filteredProducts.length,
-                          itemBuilder: (context, index) {
-                            final product = state.filteredProducts[index];
-                            return ProductCard(
-                              product: product,
-                              onTap: () => _onProductTap(product.id),
-                            );
-                          },
-                        ),
-                ),
-                // Cart bar
-                CartBar(
-                  cart: state.cart,
-                  onChargeTap: () => _showCartDetail(state.cart),
-                  onCartTap: () => _showCartDetail(state.cart),
-                ),
-              ],
-            );
-          }
-
-          return const SizedBox();
+              ),
+              // Cart bar
+              CartBar(
+                cart: cart,
+                onChargeTap: cart.isEmpty ? () {} : () => _showCartDetail(cart),
+                onCartTap: cart.isEmpty ? () {} : () => _showCartDetail(cart),
+              ),
+            ],
+          );
         },
       ),
     );
@@ -318,7 +391,7 @@ class _SalesPageState extends State<SalesPage> {
     return Drawer(
       child: Column(
         children: [
-          // User info header
+          // Header
           Container(
             width: double.infinity,
             padding: EdgeInsets.only(
@@ -349,11 +422,15 @@ class _SalesPageState extends State<SalesPage> {
                 ),
                 const SizedBox(height: 12),
                 const Text(
-                  'Usaha Mulia, Transaksi Bahagia',
+                  'demo@supri.id',
+                  style: TextStyle(color: AppColors.textOnPrimary, fontSize: 12),
+                ),
+                const Text(
+                  'Toko Utama',
                   style: TextStyle(
                     color: AppColors.textOnPrimary,
-                    fontSize: 12,
-                    fontStyle: FontStyle.italic,
+                    fontSize: 14,
+                    fontWeight: FontWeight.w600,
                   ),
                 ),
               ],
@@ -405,7 +482,6 @@ class _SalesPageState extends State<SalesPage> {
               ],
             ),
           ),
-          // Log out
           const Divider(height: 1),
           _DrawerItem(
             icon: Icons.logout,
