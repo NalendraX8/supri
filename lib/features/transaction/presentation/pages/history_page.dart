@@ -2,6 +2,8 @@ import 'package:flutter/material.dart';
 
 import '../../../../core/theme/app_colors.dart';
 import '../../../../core/widgets/app_card.dart';
+import '../../../sales/domain/entities/product_entity.dart';
+import 'transaction_detail_page.dart';
 
 /// Transaction history page.
 class HistoryPage extends StatelessWidget {
@@ -77,25 +79,51 @@ class HistoryPage extends StatelessWidget {
       ),
     ];
 
-    return ListView(
-      padding: const EdgeInsets.all(16),
-      children: [
-        _DateHeader(date: '17 Mar 2026'),
-        _TransactionCard(
-          transaction: transactions[0],
-          onTap: () {},
+    return Builder(
+      builder: (ctx) => ListView(
+        padding: const EdgeInsets.all(16),
+        children: [
+          const _DateHeader(date: '17 Mar 2026'),
+          _TransactionCard(
+            transaction: transactions[0],
+            onTap: () => _navigateToDetail(ctx, transactions[0]),
+          ),
+          _TransactionCard(
+            transaction: transactions[1],
+            onTap: () => _navigateToDetail(ctx, transactions[1]),
+          ),
+          const SizedBox(height: 16),
+          const _DateHeader(date: '16 Mar 2026'),
+          _TransactionCard(
+            transaction: transactions[2],
+            onTap: () => _navigateToDetail(ctx, transactions[2]),
+          ),
+        ],
+      ),
+    );
+  }
+
+  void _navigateToDetail(BuildContext context, _TransactionItem transaction) {
+    Navigator.push(
+      context,
+      MaterialPageRoute(
+        builder: (_) => TransactionDetailPage(
+          invoiceId: transaction.invoice,
+          cashierName: 'Kasir Demo',
+          dateTime: DateTime.now(),
+          paymentMethod: 'QRIS',
+          orderType: 'Dine In',
+          items: [
+            CartItemEntity(
+              product: ProductEntity(id: '1', name: 'Es Teh Manis', price: 5000, category: 'Minuman'),
+              quantity: 1,
+            ),
+          ],
+          subtotal: 5000,
+          tax: 500,
+          total: 5500,
         ),
-        _TransactionCard(
-          transaction: transactions[1],
-          onTap: () {},
-        ),
-        const SizedBox(height: 16),
-        _DateHeader(date: '16 Mar 2026'),
-        _TransactionCard(
-          transaction: transactions[2],
-          onTap: () {},
-        ),
-      ],
+      ),
     );
   }
 
