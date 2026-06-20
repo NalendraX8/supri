@@ -4,6 +4,9 @@ import 'package:flutter_bloc/flutter_bloc.dart';
 import 'core/theme/app_theme.dart';
 import 'features/auth/presentation/bloc/auth_bloc.dart';
 import 'features/auth/presentation/bloc/auth_event.dart';
+import 'features/auth/presentation/bloc/auth_state.dart';
+import 'features/auth/presentation/pages/login_page.dart';
+import 'features/auth/presentation/pages/outlet_selection_page.dart';
 import 'features/sales/presentation/bloc/sales_bloc.dart';
 import 'features/sales/presentation/pages/sales_page.dart';
 import 'features/settings/presentation/pages/rekap_page.dart';
@@ -43,8 +46,32 @@ class AppNavigator extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
-    // Skip login - go directly to main app with static data
-    return MainNavigator(initialIndex: 0);
+    return BlocBuilder<AuthBloc, AuthState>(
+      builder: (context, state) {
+        if (state is AuthUnauthenticated || state is AuthInitial) {
+          return const LoginPage();
+        }
+
+        if (state is AuthLoading) {
+          return const Scaffold(
+            body: Center(child: CircularProgressIndicator()),
+          );
+        }
+
+        if (state is AuthError) {
+          return LoginPage(errorMessage: state.message);
+        }
+
+        if (state is AuthAuthenticated) {
+          if (state.needsOutletSelection) {
+            return const OutletSelectionPage();
+          }
+          return MainNavigator(initialIndex: 0);
+        }
+
+        return const LoginPage();
+      },
+    );
   }
 }
 

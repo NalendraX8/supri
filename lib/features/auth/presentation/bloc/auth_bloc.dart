@@ -25,7 +25,7 @@ class AuthBloc extends Bloc<AuthEvent, AuthState> {
     emit(const AuthLoading());
     try {
       final auth = await repository.login(event.email, event.password);
-      emit(AuthAuthenticated(auth: auth, needsOutletSelection: false));
+      emit(AuthAuthenticated(auth: auth, needsOutletSelection: true));
     } catch (e) {
       emit(AuthError(e.toString()));
     }
