@@ -167,8 +167,16 @@ void _showKasPage(BuildContext context) {
 
 void _showRekapPage(BuildContext context) {
   final mainState = context.findAncestorStateOfType<_MainNavigatorState>();
-  mainState?._navigatorKeys[1].currentState?.push(
-    MaterialPageRoute(builder: (_) => const RekapPage()),
+  mainState?._navigatorKeys[2].currentState?.push(
+    MaterialPageRoute(
+      builder: (_) => RekapPage(
+        onNavigateToSales: () => _navigateTo(context, 0),
+        onNavigateToHistory: () => _navigateTo(context, 1),
+        onNavigateToKas: () => _showKasPage(context),
+        onNavigateToSettings: () => _navigateTo(context, 2),
+        onLogout: () => _logout(context),
+      ),
+    ),
   );
 }
 
