@@ -10,9 +10,13 @@ class SalesBloc extends Bloc<SalesEvent, SalesState> {
   final ProductRepository repository;
   CartEntity _cart = const CartEntity();
   List<ProductEntity> _products = [];
+  String _searchQuery = '';
+  String? _selectedCategory;
 
   SalesBloc({required this.repository}) : super(SalesInitial()) {
     on<LoadProductsEvent>(_onLoadProducts);
+    on<SearchProductsEvent>(_onSearchProducts);
+    on<FilterCategoryEvent>(_onFilterCategory);
     on<AddToCartEvent>(_onAddToCart);
     on<UpdateCartQuantityEvent>(_onUpdateCartQuantity);
     on<RemoveFromCartEvent>(_onRemoveFromCart);
@@ -22,23 +26,48 @@ class SalesBloc extends Bloc<SalesEvent, SalesState> {
     on<HoldTransactionEvent>(_onHoldTransaction);
   }
 
+  List<ProductEntity> _getFilteredProducts() {
+    final query = _searchQuery.toLowerCase();
+    return _products.where((p) {
+      if (_selectedCategory != null && p.category != _selectedCategory) return false;
+      return query.isEmpty || p.name.toLowerCase().contains(query);
+    }).toList();
+  }
+
+  void _emitLoaded(Emitter<SalesState> emit) {
+    emit(SalesLoaded(
+      products: _products,
+      filteredProducts: _getFilteredProducts(),
+      cart: _cart,
+    ));
+  }
+
   Future<void> _onLoadProducts(LoadProductsEvent event, Emitter<SalesState> emit) async {
     emit(SalesLoading());
     try {
       _products = await repository.getProducts();
-      emit(SalesLoaded(
-        products: _products,
-        filteredProducts: _products,
-        cart: _cart,
-      ));
+      _emitLoaded(emit);
     } catch (e) {
       emit(SalesError(e.toString()));
     }
   }
 
+  void _onSearchProducts(SearchProductsEvent event, Emitter<SalesState> emit) {
+    if (state is SalesLoaded) {
+      _searchQuery = event.query;
+      _emitLoaded(emit);
+    }
+  }
+
+  void _onFilterCategory(FilterCategoryEvent event, Emitter<SalesState> emit) {
+    if (state is SalesLoaded) {
+      _selectedCategory = event.category;
+      _emitLoaded(emit);
+    }
+  }
+
   void _onAddToCart(AddToCartEvent event, Emitter<SalesState> emit) {
     if (state is SalesLoaded) {
-      final currentState = state as SalesLoaded;
       final existingIndex = _cart.items.indexWhere((i) => i.product.id == event.productId);
 
       List<CartItemEntity> newItems;
@@ -68,13 +97,12 @@ class SalesBloc extends Bloc<SalesEvent, SalesState> {
       }
 
       _cart = _cart.copyWith(items: newItems);
-      emit(currentState.copyWith(cart: _cart));
+      _emitLoaded(emit);
     }
   }
 
   void _onUpdateCartQuantity(UpdateCartQuantityEvent event, Emitter<SalesState> emit) {
     if (state is SalesLoaded) {
-      final currentState = state as SalesLoaded;
       final existingIndex = _cart.items.indexWhere((i) => i.product.id == event.productId);
 
       if (existingIndex >= 0) {
@@ -89,54 +117,52 @@ class SalesBloc extends Bloc<SalesEvent, SalesState> {
           );
         }
         _cart = _cart.copyWith(items: newItems);
-        emit(currentState.copyWith(cart: _cart));
+        _emitLoaded(emit);
       }
     }
   }
 
   void _onRemoveFromCart(RemoveFromCartEvent event, Emitter<SalesState> emit) {
     if (state is SalesLoaded) {
-      final currentState = state as SalesLoaded;
       final newItems = _cart.items.where((i) => i.product.id != event.productId).toList();
       _cart = _cart.copyWith(items: newItems);
-      emit(currentState.copyWith(cart: _cart));
+      _emitLoaded(emit);
     }
   }
 
   void _onClearCart(ClearCartEvent event, Emitter<SalesState> emit) {
     if (state is SalesLoaded) {
-      final currentState = state as SalesLoaded;
       _cart = const CartEntity();
-      emit(currentState.copyWith(cart: _cart));
+      _emitLoaded(emit);
     }
   }
 
   void _onApplyDiscount(ApplyDiscountEvent event, Emitter<SalesState> emit) {
     if (state is SalesLoaded) {
-      final currentState = state as SalesLoaded;
       _cart = _cart.copyWith(
         discountPercent: event.isPercent ? event.percent : null,
         discountValue: !event.isPercent ? event.value : null,
         isDiscountPercent: event.isPercent,
       );
-      emit(currentState.copyWith(cart: _cart));
+      _emitLoaded(emit);
     }
   }
 
   void _onSetCustomer(SetCustomerEvent event, Emitter<SalesState> emit) {
     if (state is SalesLoaded) {
-      final currentState = state as SalesLoaded;
       _cart = _cart.copyWith(customerName: event.customerName);
-      emit(currentState.copyWith(cart: _cart));
+      _emitLoaded(emit);
     }
   }
 
   void _onHoldTransaction(HoldTransactionEvent event, Emitter<SalesState> emit) {
     if (state is SalesLoaded) {
-      final currentState = state as SalesLoaded;
+      // Emit SalesHeld state to notify UI that transaction was held
       emit(SalesHeld(_cart));
+      // Clear cart for new transaction
       _cart = const CartEntity();
-      emit(currentState.copyWith(cart: _cart));
+      // Re-emit loaded state with empty cart
+      _emitLoaded(emit);
     }
   }
 }

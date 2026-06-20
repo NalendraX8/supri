@@ -25,10 +25,10 @@ class CategoryChips extends StatelessWidget {
 
   static const List<Map<String, String>> categories = [
     {'id': '', 'name': 'All'},
-    {'id': 'Rice', 'name': 'Rice'},
+    {'id': 'Makanan', 'name': 'Makanan'},
+    {'id': 'Minuman', 'name': 'Minuman'},
+    {'id': 'Nasi', 'name': 'Nasi'},
     {'id': 'Bahan Baku', 'name': 'Bahan Baku'},
-    {'id': 'Drinks', 'name': 'Drinks'},
-    {'id': 'Food', 'name': 'Food'},
   ];
 
   @override

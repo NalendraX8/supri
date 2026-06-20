@@ -6,7 +6,7 @@ abstract class ProductRepository {
   Future<List<ProductEntity>> getProducts();
 
   /// Get product by ID.
-  Future<ProductEntity?> getProduct(String id);
+  Future<ProductEntity> getProduct(String id);
 
   /// Get products by category.
   Future<List<ProductEntity>> getProductsByCategory(String category);

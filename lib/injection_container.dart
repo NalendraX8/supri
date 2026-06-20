@@ -1,7 +1,6 @@
 import 'package:get_it/get_it.dart';
-import 'package:http/http.dart' as http;
 
-import 'core/network/api_remote_datasource.dart';
+import 'core/network/mock_product_datasource.dart';
 import 'features/auth/presentation/bloc/auth_bloc.dart';
 import 'features/auth/data/datasources/auth_remote_datasource.dart';
 import 'features/auth/data/repositories/auth_repository_impl.dart';
@@ -16,18 +15,15 @@ final sl = GetIt.instance;
 
 /// Initializes all dependencies.
 Future<void> initDependencies() async {
-  // External
-  sl.registerLazySingleton(() => http.Client());
+  // Mock data sources
+  sl.registerLazySingleton(() => MockProductDataSource());
 
   // Data sources
-  sl.registerLazySingleton<ApiRemoteDataSource>(
-    () => ApiRemoteDataSource(client: sl()),
-  );
   sl.registerLazySingleton<AuthRemoteDataSource>(
-    () => AuthRemoteDataSource(api: sl()),
+    () => AuthRemoteDataSource(),
   );
   sl.registerLazySingleton<ProductRemoteDataSource>(
-    () => ProductRemoteDataSource(api: sl()),
+    () => ProductRemoteDataSource(mockDataSource: sl()),
   );
 
   // Repositories

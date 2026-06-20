@@ -22,11 +22,14 @@ class SettingsPage extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
+    final scaffoldKey = GlobalKey<ScaffoldState>();
+
     return Scaffold(
+      key: scaffoldKey,
       appBar: AppBar(
         leading: IconButton(
           icon: const Icon(Icons.menu),
-          onPressed: () => Scaffold.of(context).openDrawer(),
+          onPressed: () => scaffoldKey.currentState?.openDrawer(),
         ),
         title: const Text('SUPRI'),
         actions: [

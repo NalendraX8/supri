@@ -4,9 +4,9 @@ import '../../../../core/theme/app_colors.dart';
 import '../../domain/entities/product_entity.dart';
 
 /// Cart detail bottom sheet.
-class CartDetailSheet extends StatelessWidget {
+class CartDetailSheet extends StatefulWidget {
   final CartEntity cart;
-  final Function(String productId) onUpdateQuantity;
+  final Function(String productId, int newQuantity) onUpdateQuantity;
   final Function(String productId) onRemoveItem;
   final VoidCallback onClearCart;
   final VoidCallback onHold;
@@ -25,6 +25,13 @@ class CartDetailSheet extends StatelessWidget {
     required this.onCustomerTap,
     required this.onDiscountTap,
   });
+
+  @override
+  State<CartDetailSheet> createState() => _CartDetailSheetState();
+}
+
+class _CartDetailSheetState extends State<CartDetailSheet> {
+  String _priceType = 'Dine In';
 
   @override
   Widget build(BuildContext context) {
@@ -53,7 +60,7 @@ class CartDetailSheet extends StatelessWidget {
               children: [
                 Expanded(
                   child: OutlinedButton.icon(
-                    onPressed: onCustomerTap,
+                    onPressed: widget.onCustomerTap,
                     icon: const Icon(Icons.person_outline, size: 18),
                     label: const Text('CUSTOMER'),
                     style: OutlinedButton.styleFrom(
@@ -65,7 +72,7 @@ class CartDetailSheet extends StatelessWidget {
                 const SizedBox(width: 12),
                 Expanded(
                   child: OutlinedButton.icon(
-                    onPressed: onDiscountTap,
+                    onPressed: widget.onDiscountTap,
                     icon: const Icon(Icons.discount_outlined, size: 18),
                     label: const Text('DISCOUNT'),
                     style: OutlinedButton.styleFrom(
@@ -94,13 +101,17 @@ class CartDetailSheet extends StatelessWidget {
                     borderRadius: BorderRadius.circular(8),
                   ),
                   child: DropdownButton<String>(
-                    value: 'Dine In',
+                    value: _priceType,
                     underline: const SizedBox(),
                     items: const [
                       DropdownMenuItem(value: 'Dine In', child: Text('Dine In')),
                       DropdownMenuItem(value: 'Take Away', child: Text('Take Away')),
                     ],
-                    onChanged: null,
+                    onChanged: (value) {
+                      if (value != null) {
+                        setState(() => _priceType = value);
+                      }
+                    },
                   ),
                 ),
               ],
@@ -113,13 +124,21 @@ class CartDetailSheet extends StatelessWidget {
             child: ListView.builder(
               shrinkWrap: true,
               padding: const EdgeInsets.symmetric(horizontal: 16),
-              itemCount: cart.items.length,
+              itemCount: widget.cart.items.length,
               itemBuilder: (context, index) {
-                final item = cart.items[index];
+                final item = widget.cart.items[index];
                 return _CartItemRow(
                   item: item,
-                  onIncrement: () => onUpdateQuantity(item.product.id),
-                  onRemove: () => onRemoveItem(item.product.id),
+                  onIncrement: () {
+                    widget.onUpdateQuantity(item.product.id, item.quantity + 1);
+                  },
+                  onDecrement: () {
+                    if (item.quantity > 1) {
+                      widget.onUpdateQuantity(item.product.id, item.quantity - 1);
+                    } else {
+                      widget.onRemoveItem(item.product.id);
+                    }
+                  },
                 );
               },
             ),
@@ -133,13 +152,13 @@ class CartDetailSheet extends StatelessWidget {
             ),
             child: Column(
               children: [
-                _SummaryRow(label: 'Sub Total', value: cart.subtotal),
+                _SummaryRow(label: 'Sub Total', value: widget.cart.subtotal),
                 const SizedBox(height: 4),
-                _SummaryRow(label: 'Tax (10%)', value: cart.tax),
-                if (cart.discountAmount > 0)
-                  _SummaryRow(label: 'Discount', value: -cart.discountAmount, isDiscount: true),
+                _SummaryRow(label: 'Tax (10%)', value: widget.cart.tax),
+                if (widget.cart.discountAmount > 0)
+                  _SummaryRow(label: 'Discount', value: -widget.cart.discountAmount, isDiscount: true),
                 const Divider(),
-                _SummaryRow(label: 'TOTAL', value: cart.total, isTotal: true),
+                _SummaryRow(label: 'TOTAL', value: widget.cart.total, isTotal: true),
               ],
             ),
           ),
@@ -150,7 +169,7 @@ class CartDetailSheet extends StatelessWidget {
               children: [
                 // Clear button
                 IconButton(
-                  onPressed: onClearCart,
+                  onPressed: widget.onClearCart,
                   icon: const Icon(Icons.close),
                   style: IconButton.styleFrom(
                     backgroundColor: AppColors.error,
@@ -160,7 +179,7 @@ class CartDetailSheet extends StatelessWidget {
                 const SizedBox(width: 8),
                 // Hold button
                 IconButton(
-                  onPressed: onHold,
+                  onPressed: widget.onHold,
                   icon: const Icon(Icons.pause),
                   style: IconButton.styleFrom(
                     backgroundColor: AppColors.warning,
@@ -171,7 +190,7 @@ class CartDetailSheet extends StatelessWidget {
                 // Payment button
                 Expanded(
                   child: ElevatedButton(
-                    onPressed: onPayment,
+                    onPressed: widget.onPayment,
                     style: ElevatedButton.styleFrom(
                       backgroundColor: AppColors.success,
                       foregroundColor: AppColors.textOnPrimary,
@@ -198,12 +217,12 @@ class CartDetailSheet extends StatelessWidget {
 class _CartItemRow extends StatelessWidget {
   final CartItemEntity item;
   final VoidCallback onIncrement;
-  final VoidCallback onRemove;
+  final VoidCallback onDecrement;
 
   const _CartItemRow({
     required this.item,
     required this.onIncrement,
-    required this.onRemove,
+    required this.onDecrement,
   });
 
   @override
@@ -222,7 +241,7 @@ class _CartItemRow extends StatelessWidget {
               mainAxisSize: MainAxisSize.min,
               children: [
                 InkWell(
-                  onTap: onRemove,
+                  onTap: onDecrement,
                   child: const Padding(
                     padding: EdgeInsets.all(4),
                     child: Icon(Icons.remove, size: 16),
@@ -261,6 +280,13 @@ class _CartItemRow extends StatelessWidget {
         ],
       ),
     );
+  }
+
+  String _formatPrice(double price) {
+    return 'IDR ${price.toStringAsFixed(0).replaceAllMapped(
+          RegExp(r'(\d{1,3})(?=(\d{3})+(?!\d))'),
+          (Match m) => '${m[1]}.',
+        )}';
   }
 }
 

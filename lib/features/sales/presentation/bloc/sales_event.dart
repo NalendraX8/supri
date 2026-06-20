@@ -54,17 +54,6 @@ class RemoveFromCartEvent extends SalesEvent {
 }
 
 /// Update cart item quantity event.
-class UpdateQuantityEvent extends SalesEvent {
-  final String productId;
-  final int quantity;
-
-  const UpdateQuantityEvent(this.productId, this.quantity);
-
-  @override
-  List<Object?> get props => [productId, quantity];
-}
-
-/// Update cart quantity (alias for AddToCartEvent increment).
 class UpdateCartQuantityEvent extends SalesEvent {
   final String productId;
   final int quantity;

@@ -43,6 +43,8 @@ class AuthBloc extends Bloc<AuthEvent, AuthState> {
         outletName: event.outletName,
       );
       emit(AuthAuthenticated(auth: updatedAuth, needsOutletSelection: false));
+    } else {
+      emit(const AuthError('Cannot select outlet: not authenticated'));
     }
   }
 }

@@ -23,7 +23,30 @@ class _DiscountDialogState extends State<DiscountDialog> {
   }
 
   void _onSave() {
-    final amount = double.tryParse(_amountController.text) ?? 0;
+    final amount = double.tryParse(_amountController.text);
+
+    // Validate amount
+    if (amount == null || amount < 0) {
+      ScaffoldMessenger.of(context).showSnackBar(
+        const SnackBar(content: Text('Please enter a valid amount')),
+      );
+      return;
+    }
+
+    // Validate percentage (max 100%)
+    if (_isPercent && amount > 100) {
+      ScaffoldMessenger.of(context).showSnackBar(
+        const SnackBar(content: Text('Percentage cannot exceed 100%')),
+      );
+      return;
+    }
+
+    // Skip if no amount entered
+    if (amount == 0) {
+      Navigator.pop(context);
+      return;
+    }
+
     widget.onApply(
       _isPercent ? amount : null,
       !_isPercent ? amount : null,

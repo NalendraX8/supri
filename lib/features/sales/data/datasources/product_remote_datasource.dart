@@ -1,45 +1,37 @@
-import '../../../../core/network/api_remote_datasource.dart';
+import '../../../../core/network/mock_product_datasource.dart';
 import '../../domain/entities/product_entity.dart';
 
 /// Remote data source for products.
 class ProductRemoteDataSource {
-  final ApiRemoteDataSource api;
+  final MockProductDataSource mockDataSource;
 
-  ProductRemoteDataSource({required this.api});
+  ProductRemoteDataSource({required this.mockDataSource});
 
   Future<List<ProductEntity>> getProducts() async {
-    final models = await api.getProducts();
-    return models.map((m) => ProductEntity(
-      id: m.id,
-      name: m.name,
-      price: m.price,
-      category: m.category,
-    )).toList();
+    return await mockDataSource.getProducts();
   }
 
-  Future<ProductEntity?> getProduct(String id) async {
-    try {
-      final model = await api.getProduct(id);
-      return ProductEntity(
-        id: model.id,
-        name: model.name,
-        price: model.price,
-        category: model.category,
-      );
-    } catch (e) {
-      return null;
-    }
+  Future<ProductEntity> getProduct(String id) async {
+    final products = await mockDataSource.getProducts();
+    return products.firstWhere(
+      (p) => p.id == id,
+      orElse: () => throw Exception('Product not found'),
+    );
   }
 
   Future<List<ProductEntity>> getProductsByCategory(String category) async {
-    final products = await getProducts();
+    final products = await mockDataSource.getProducts();
     return products.where((p) => p.category == category).toList();
   }
 
   Future<List<ProductEntity>> searchProducts(String query) async {
-    final products = await getProducts();
+    final products = await mockDataSource.getProducts();
     return products.where((p) =>
       p.name.toLowerCase().contains(query.toLowerCase())
     ).toList();
+  }
+
+  List<String> getCategories() {
+    return mockDataSource.getCategories();
   }
 }

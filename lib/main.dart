@@ -64,6 +64,9 @@ class _MainNavigatorState extends State<MainNavigator> {
     (_) => GlobalKey<NavigatorState>(),
   );
 
+  // Expose navigatorKeys for external navigation
+  List<GlobalKey<NavigatorState>> get navigatorKeys => _navigatorKeys;
+
   @override
   void initState() {
     super.initState();
@@ -156,15 +159,15 @@ void _navigateTo(BuildContext context, int index) {
 }
 
 void _showKasPage(BuildContext context) {
-  Navigator.push(
-    context,
+  final mainState = context.findAncestorStateOfType<_MainNavigatorState>();
+  mainState?._navigatorKeys[1].currentState?.push(
     MaterialPageRoute(builder: (_) => const KasPage()),
   );
 }
 
 void _showRekapPage(BuildContext context) {
-  Navigator.push(
-    context,
+  final mainState = context.findAncestorStateOfType<_MainNavigatorState>();
+  mainState?._navigatorKeys[1].currentState?.push(
     MaterialPageRoute(builder: (_) => const RekapPage()),
   );
 }

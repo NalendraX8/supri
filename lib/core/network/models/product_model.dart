@@ -20,7 +20,7 @@ class ProductModel {
     }
     return ProductModel(
       id: json['id']?.toString() ?? '',
-      name: json['name'] ?? '',
+      name: json['title'] ?? '', // Fake Store API uses 'title'
       price: (json['price'] ?? 0).toDouble(),
       category: json['category'] ?? '',
     );
