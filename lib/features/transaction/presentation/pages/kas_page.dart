@@ -2,8 +2,6 @@ import 'package:flutter/material.dart';
 
 import '../../../../core/theme/app_colors.dart';
 import '../../../../core/widgets/app_card.dart';
-import '../../../../core/widgets/app_drawer.dart';
-import '../../../../main.dart';
 
 /// Kas (Cash Management) page.
 class KasPage extends StatelessWidget {
@@ -24,15 +22,8 @@ class KasPage extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
-    final scaffoldKey = GlobalKey<ScaffoldState>();
-
     return Scaffold(
-      key: scaffoldKey,
       appBar: AppBar(
-        leading: IconButton(
-          icon: const Icon(Icons.menu),
-          onPressed: () => scaffoldKey.currentState?.openDrawer(),
-        ),
         title: const Text('SUPRI'),
         actions: [
           IconButton(
@@ -40,15 +31,6 @@ class KasPage extends StatelessWidget {
             onPressed: () {},
           ),
         ],
-      ),
-      drawer: AppDrawer(
-        currentRoute: 'kas',
-        onNavigateToSales: () => context.navigateToSales(),
-        onNavigateToKas: () => context.navigateToKas(),
-        onNavigateToRekap: () => context.navigateToRekap(),
-        onNavigateToHistory: () => context.navigateToHistory(),
-        onNavigateToSettings: () => context.navigateToSettings(),
-        onLogout: () => context.logout(),
       ),
       body: Column(
         children: [

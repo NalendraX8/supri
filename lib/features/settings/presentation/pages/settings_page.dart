@@ -1,9 +1,11 @@
 import 'package:flutter/material.dart';
+import 'package:flutter_bloc/flutter_bloc.dart';
 
 import '../../../../core/theme/app_colors.dart';
+import '../../../../core/widgets/app_button.dart';
 import '../../../../core/widgets/app_card.dart';
-import '../../../../core/widgets/app_drawer.dart';
-import '../../../../main.dart';
+import '../../../auth/presentation/bloc/auth_bloc.dart';
+import '../../../auth/presentation/bloc/auth_event.dart';
 
 /// Settings page.
 class SettingsPage extends StatelessWidget {
@@ -24,15 +26,8 @@ class SettingsPage extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
-    final scaffoldKey = GlobalKey<ScaffoldState>();
-
     return Scaffold(
-      key: scaffoldKey,
       appBar: AppBar(
-        leading: IconButton(
-          icon: const Icon(Icons.menu),
-          onPressed: () => scaffoldKey.currentState?.openDrawer(),
-        ),
         title: const Text('SUPRI'),
         actions: [
           IconButton(
@@ -40,15 +35,6 @@ class SettingsPage extends StatelessWidget {
             onPressed: () {},
           ),
         ],
-      ),
-      drawer: AppDrawer(
-        currentRoute: 'settings',
-        onNavigateToSales: () => context.navigateToSales(),
-        onNavigateToKas: () => context.navigateToKas(),
-        onNavigateToRekap: () => context.navigateToRekap(),
-        onNavigateToHistory: () => context.navigateToHistory(),
-        onNavigateToSettings: () => context.navigateToSettings(),
-        onLogout: () => context.logout(),
       ),
       body: ListView(
         padding: const EdgeInsets.all(16),
@@ -120,6 +106,14 @@ class SettingsPage extends StatelessWidget {
               ],
             ),
           ),
+          const SizedBox(height: 24),
+          // Log Out button
+          AppButton(
+            text: 'LOG OUT',
+            variant: AppButtonVariant.danger,
+            isFullWidth: true,
+            onPressed: () => _showLogoutDialog(context),
+          ),
         ],
       ),
     );
@@ -159,6 +153,29 @@ class SettingsPage extends StatelessWidget {
           ElevatedButton(
             onPressed: () => Navigator.pop(context),
             child: const Text('SAVE'),
+          ),
+        ],
+      ),
+    );
+  }
+
+  void _showLogoutDialog(BuildContext context) {
+    showDialog(
+      context: context,
+      builder: (ctx) => AlertDialog(
+        title: const Text('Logout'),
+        content: const Text('Are you sure you want to logout?'),
+        actions: [
+          TextButton(
+            onPressed: () => Navigator.pop(ctx),
+            child: const Text('CANCEL'),
+          ),
+          ElevatedButton(
+            onPressed: () {
+              Navigator.pop(ctx);
+              context.read<AuthBloc>().add(const LogoutEvent());
+            },
+            child: const Text('LOGOUT'),
           ),
         ],
       ),

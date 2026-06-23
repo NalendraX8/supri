@@ -3,8 +3,6 @@ import 'package:flutter/material.dart';
 import '../../../../core/theme/app_colors.dart';
 import '../../../../core/widgets/app_button.dart';
 import '../../../../core/widgets/app_card.dart';
-import '../../../../core/widgets/app_drawer.dart';
-import '../../../../main.dart';
 
 /// Rekap (Summary) page.
 class RekapPage extends StatefulWidget {
@@ -30,25 +28,9 @@ class RekapPage extends StatefulWidget {
 class _RekapPageState extends State<RekapPage> {
   @override
   Widget build(BuildContext context) {
-    final scaffoldKey = GlobalKey<ScaffoldState>();
-
     return Scaffold(
-      key: scaffoldKey,
       appBar: AppBar(
-        leading: IconButton(
-          icon: const Icon(Icons.menu),
-          onPressed: () => scaffoldKey.currentState?.openDrawer(),
-        ),
         title: const Text('Rekap'),
-      ),
-      drawer: AppDrawer(
-        currentRoute: 'rekap',
-        onNavigateToSales: () => context.navigateToSales(),
-        onNavigateToKas: () => context.navigateToKas(),
-        onNavigateToRekap: () => context.navigateToRekap(),
-        onNavigateToHistory: () => context.navigateToHistory(),
-        onNavigateToSettings: () => context.navigateToSettings(),
-        onLogout: () => context.logout(),
       ),
       body: SingleChildScrollView(
         padding: const EdgeInsets.all(16),

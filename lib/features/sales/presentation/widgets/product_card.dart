@@ -233,59 +233,60 @@ class _ProductCardState extends State<ProductCard>
                         ),
                       ),
                     ),
-                    // Product info area
-                    Expanded(
-                      flex: 2,
-                      child: Container(
-                        color: AppColors.surface,
-                        padding: const EdgeInsets.all(10),
-                        child: Column(
-                          crossAxisAlignment: CrossAxisAlignment.start,
-                          mainAxisAlignment: MainAxisAlignment.center,
-                          children: [
-                            // Product name
-                            Text(
+                    // Product info area - flexible height
+                    Container(
+                      constraints: const BoxConstraints(minHeight: 56),
+                      color: AppColors.surface,
+                      padding: const EdgeInsets.all(8),
+                      child: Column(
+                        crossAxisAlignment: CrossAxisAlignment.start,
+                        mainAxisSize: MainAxisSize.min,
+                        children: [
+                          // Product name - flexible with ellipsis
+                          Flexible(
+                            child: Text(
                               widget.product.name,
                               style: TextStyle(
-                                fontSize: 12,
+                                fontSize: 11,
                                 fontWeight: FontWeight.w600,
                                 color: widget.isOutOfStock
                                     ? AppColors.grey500
                                     : AppColors.textPrimary,
                               ),
-                              maxLines: 2,
+                              maxLines: 3,
+                              overflow: TextOverflow.ellipsis,
+                              softWrap: true,
+                            ),
+                          ),
+                          const SizedBox(height: 4),
+                          // Price
+                          if (widget.hasDiscount && widget.discountPercent != null) ...[
+                            Text(
+                              CurrencyFormatter.format(
+                                widget.product.price *
+                                    (100 - widget.discountPercent!) /
+                                    100,
+                              ),
+                              style: const TextStyle(
+                                fontSize: 10,
+                                color: AppColors.primary,
+                                fontWeight: FontWeight.w700,
+                              ),
                               overflow: TextOverflow.ellipsis,
                             ),
-                            const SizedBox(height: 4),
-                            // Price
-                            if (widget.hasDiscount && widget.discountPercent != null) ...[
-                              Text(
-                                CurrencyFormatter.format(
-                                  widget.product.price *
-                                      (100 - widget.discountPercent!) /
-                                      100,
-                                ),
-                                style: const TextStyle(
-                                  fontSize: 11,
-                                  color: AppColors.primary,
-                                  fontWeight: FontWeight.w700,
-                                ),
-                                overflow: TextOverflow.ellipsis,
+                          ] else
+                            Text(
+                              CurrencyFormatter.format(widget.product.price),
+                              style: TextStyle(
+                                fontSize: 10,
+                                color: widget.isOutOfStock
+                                    ? AppColors.grey500
+                                    : AppColors.primary,
+                                fontWeight: FontWeight.w600,
                               ),
-                            ] else
-                              Text(
-                                CurrencyFormatter.format(widget.product.price),
-                                style: TextStyle(
-                                  fontSize: 11,
-                                  color: widget.isOutOfStock
-                                      ? AppColors.grey500
-                                      : AppColors.primary,
-                                  fontWeight: FontWeight.w600,
-                                ),
-                                overflow: TextOverflow.ellipsis,
-                              ),
-                          ],
-                        ),
+                              overflow: TextOverflow.ellipsis,
+                            ),
+                        ],
                       ),
                     ),
                   ],

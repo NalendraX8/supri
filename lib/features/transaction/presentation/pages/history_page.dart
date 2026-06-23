@@ -2,8 +2,6 @@ import 'package:flutter/material.dart';
 
 import '../../../../core/theme/app_colors.dart';
 import '../../../../core/widgets/app_card.dart';
-import '../../../../core/widgets/app_drawer.dart';
-import '../../../../main.dart';
 import '../../../sales/domain/entities/product_entity.dart';
 import 'transaction_detail_page.dart';
 
@@ -26,15 +24,8 @@ class HistoryPage extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
-    final scaffoldKey = GlobalKey<ScaffoldState>();
-
     return Scaffold(
-      key: scaffoldKey,
       appBar: AppBar(
-        leading: IconButton(
-          icon: const Icon(Icons.menu),
-          onPressed: () => scaffoldKey.currentState?.openDrawer(),
-        ),
         title: const Text('SUPRI'),
         actions: [
           IconButton(
@@ -46,15 +37,6 @@ class HistoryPage extends StatelessWidget {
             },
           ),
         ],
-      ),
-      drawer: AppDrawer(
-        currentRoute: 'history',
-        onNavigateToSales: () => context.navigateToSales(),
-        onNavigateToKas: () => context.navigateToKas(),
-        onNavigateToRekap: () => context.navigateToRekap(),
-        onNavigateToHistory: () => context.navigateToHistory(),
-        onNavigateToSettings: () => context.navigateToSettings(),
-        onLogout: () => context.logout(),
       ),
       body: _buildHistoryList(),
     );

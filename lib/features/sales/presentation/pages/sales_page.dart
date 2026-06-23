@@ -4,7 +4,6 @@ import 'package:flutter/material.dart';
 import 'package:flutter_bloc/flutter_bloc.dart';
 
 import '../../../../core/theme/app_colors.dart';
-import '../../../../core/widgets/app_drawer.dart';
 import '../../domain/entities/product_entity.dart';
 import '../bloc/sales_bloc.dart';
 import '../bloc/sales_event.dart';
@@ -14,7 +13,6 @@ import '../widgets/cart_detail_sheet.dart';
 import '../widgets/category_chips.dart';
 import '../widgets/discount_dialog.dart';
 import '../widgets/product_card.dart';
-import '../../../../main.dart';
 
 /// Main Sales/Home page - the primary POS screen with static data.
 class SalesPage extends StatefulWidget {
@@ -39,7 +37,6 @@ class SalesPage extends StatefulWidget {
 
 class _SalesPageState extends State<SalesPage> {
   final _searchController = TextEditingController();
-  final _scaffoldKey = GlobalKey<ScaffoldState>();
   Timer? _debounceTimer;
 
   @override
@@ -238,12 +235,7 @@ class _SalesPageState extends State<SalesPage> {
   @override
   Widget build(BuildContext context) {
     return Scaffold(
-      key: _scaffoldKey,
       appBar: AppBar(
-        leading: IconButton(
-          icon: const Icon(Icons.menu),
-          onPressed: () => _scaffoldKey.currentState?.openDrawer(),
-        ),
         title: const Text('SUPRI'),
         actions: [
           IconButton(
@@ -267,15 +259,6 @@ class _SalesPageState extends State<SalesPage> {
             ],
           ),
         ],
-      ),
-      drawer: AppDrawer(
-        currentRoute: 'sales',
-        onNavigateToSales: () => context.navigateToSales(),
-        onNavigateToKas: () => context.navigateToKas(),
-        onNavigateToRekap: () => context.navigateToRekap(),
-        onNavigateToHistory: () => context.navigateToHistory(),
-        onNavigateToSettings: () => context.navigateToSettings(),
-        onLogout: () => context.logout(),
       ),
       body: BlocBuilder<SalesBloc, SalesState>(
         builder: (context, state) {
