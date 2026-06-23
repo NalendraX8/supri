@@ -3,6 +3,8 @@ import 'package:flutter/material.dart';
 import '../../../../core/theme/app_colors.dart';
 import '../../../../core/widgets/app_button.dart';
 import '../../../../core/widgets/app_card.dart';
+import '../../../../core/widgets/app_drawer.dart';
+import '../../../../main.dart';
 
 /// Rekap (Summary) page.
 class RekapPage extends StatefulWidget {
@@ -39,7 +41,15 @@ class _RekapPageState extends State<RekapPage> {
         ),
         title: const Text('Rekap'),
       ),
-      drawer: _buildDrawer(context),
+      drawer: AppDrawer(
+        currentRoute: 'rekap',
+        onNavigateToSales: () => context.navigateToSales(),
+        onNavigateToKas: () => context.navigateToKas(),
+        onNavigateToRekap: () => context.navigateToRekap(),
+        onNavigateToHistory: () => context.navigateToHistory(),
+        onNavigateToSettings: () => context.navigateToSettings(),
+        onLogout: () => context.logout(),
+      ),
       body: SingleChildScrollView(
         padding: const EdgeInsets.all(16),
         child: Column(
@@ -47,15 +57,26 @@ class _RekapPageState extends State<RekapPage> {
           children: [
             // Cash Summary Card
             AppCard(
-              backgroundColor: AppColors.success.withValues(alpha: 0.1),
+              backgroundColor: AppColors.success.withValues(alpha: 0.08),
               child: Column(
                 crossAxisAlignment: CrossAxisAlignment.start,
                 children: [
-                  const Row(
+                  Row(
                     children: [
-                      Icon(Icons.account_balance_wallet, color: AppColors.success),
-                      SizedBox(width: 8),
-                      Text(
+                      Container(
+                        padding: const EdgeInsets.all(10),
+                        decoration: BoxDecoration(
+                          color: AppColors.success.withValues(alpha: 0.15),
+                          borderRadius: BorderRadius.circular(10),
+                        ),
+                        child: const Icon(
+                          Icons.account_balance_wallet,
+                          color: AppColors.success,
+                          size: 20,
+                        ),
+                      ),
+                      const SizedBox(width: 12),
+                      const Text(
                         'Ringkasan Kas',
                         style: TextStyle(
                           fontSize: 16,
@@ -65,12 +86,18 @@ class _RekapPageState extends State<RekapPage> {
                       ),
                     ],
                   ),
-                  const Divider(height: 24),
+                  const Padding(
+                    padding: EdgeInsets.symmetric(vertical: 16),
+                    child: Divider(height: 1),
+                  ),
                   const _SummaryRow(label: 'Saldo Awal', value: 'IDR 0'),
                   const _SummaryRow(label: 'Penjualan Tunai', value: 'IDR 0'),
                   const _SummaryRow(label: 'Kas', value: 'IDR 0'),
                   const _SummaryRow(label: 'Aktual', value: 'IDR 0'),
-                  const Divider(height: 16),
+                  const Padding(
+                    padding: EdgeInsets.symmetric(vertical: 12),
+                    child: Divider(height: 1),
+                  ),
                   const _SummaryRow(
                     label: 'Selisih',
                     value: 'IDR 0',
@@ -82,15 +109,26 @@ class _RekapPageState extends State<RekapPage> {
             const SizedBox(height: 16),
             // Sales Summary Card
             AppCard(
-              backgroundColor: AppColors.primary.withValues(alpha: 0.1),
+              backgroundColor: AppColors.primary.withValues(alpha: 0.08),
               child: Column(
                 crossAxisAlignment: CrossAxisAlignment.start,
                 children: [
-                  const Row(
+                  Row(
                     children: [
-                      Icon(Icons.point_of_sale, color: AppColors.primary),
-                      SizedBox(width: 8),
-                      Text(
+                      Container(
+                        padding: const EdgeInsets.all(10),
+                        decoration: BoxDecoration(
+                          color: AppColors.primary.withValues(alpha: 0.15),
+                          borderRadius: BorderRadius.circular(10),
+                        ),
+                        child: const Icon(
+                          Icons.point_of_sale,
+                          color: AppColors.primary,
+                          size: 20,
+                        ),
+                      ),
+                      const SizedBox(width: 12),
+                      const Text(
                         'Ringkasan Penjualan',
                         style: TextStyle(
                           fontSize: 16,
@@ -100,7 +138,10 @@ class _RekapPageState extends State<RekapPage> {
                       ),
                     ],
                   ),
-                  const Divider(height: 24),
+                  const Padding(
+                    padding: EdgeInsets.symmetric(vertical: 16),
+                    child: Divider(height: 1),
+                  ),
                   const _SummaryRow(label: 'Void', value: '0'),
                   const _SummaryRow(label: 'Total Penjualan', value: 'IDR 0'),
                 ],
@@ -109,15 +150,26 @@ class _RekapPageState extends State<RekapPage> {
             const SizedBox(height: 16),
             // Sales By Category Card
             AppCard(
-              backgroundColor: AppColors.secondary.withValues(alpha: 0.1),
+              backgroundColor: AppColors.secondary.withValues(alpha: 0.08),
               child: Column(
                 crossAxisAlignment: CrossAxisAlignment.start,
                 children: [
-                  const Row(
+                  Row(
                     children: [
-                      Icon(Icons.category, color: AppColors.secondary),
-                      SizedBox(width: 8),
-                      Text(
+                      Container(
+                        padding: const EdgeInsets.all(10),
+                        decoration: BoxDecoration(
+                          color: AppColors.secondary.withValues(alpha: 0.15),
+                          borderRadius: BorderRadius.circular(10),
+                        ),
+                        child: const Icon(
+                          Icons.category,
+                          color: AppColors.secondary,
+                          size: 20,
+                        ),
+                      ),
+                      const SizedBox(width: 12),
+                      const Text(
                         'Penjualan Per Kategori',
                         style: TextStyle(
                           fontSize: 16,
@@ -127,7 +179,10 @@ class _RekapPageState extends State<RekapPage> {
                       ),
                     ],
                   ),
-                  const Divider(height: 24),
+                  const Padding(
+                    padding: EdgeInsets.symmetric(vertical: 16),
+                    child: Divider(height: 1),
+                  ),
                   const _CategoryRow(category: 'Makanan', count: 0, amount: 0),
                   const _CategoryRow(category: 'Minuman', count: 0, amount: 0),
                   const _CategoryRow(category: 'Nasi', count: 0, amount: 0),
@@ -147,102 +202,6 @@ class _RekapPageState extends State<RekapPage> {
       ),
     );
   }
-
-  Widget _buildDrawer(BuildContext context) {
-    return Drawer(
-      child: Column(
-        children: [
-          Container(
-            width: double.infinity,
-            padding: EdgeInsets.only(
-              top: MediaQuery.of(context).padding.top + 24,
-              left: 20,
-              right: 20,
-              bottom: 20,
-            ),
-            color: AppColors.primary,
-            child: Column(
-              crossAxisAlignment: CrossAxisAlignment.start,
-              children: [
-                Container(
-                  padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 8),
-                  decoration: BoxDecoration(
-                    color: Colors.black,
-                    borderRadius: BorderRadius.circular(8),
-                  ),
-                  child: const Text(
-                    'Supri',
-                    style: TextStyle(
-                      color: AppColors.primary,
-                      fontSize: 24,
-                      fontWeight: FontWeight.w900,
-                      fontStyle: FontStyle.italic,
-                    ),
-                  ),
-                ),
-              ],
-            ),
-          ),
-          Expanded(
-            child: ListView(
-              padding: EdgeInsets.zero,
-              children: [
-                _NavDrawerItem(
-                  icon: Icons.shopping_cart,
-                  label: 'Sales',
-                  onTap: () {
-                    Navigator.pop(context);
-                    widget.onNavigateToSales?.call();
-                  },
-                ),
-                _NavDrawerItem(
-                  icon: Icons.account_balance_wallet,
-                  label: 'Kas',
-                  onTap: () {
-                    Navigator.pop(context);
-                    widget.onNavigateToKas?.call();
-                  },
-                ),
-                _NavDrawerItem(
-                  icon: Icons.bar_chart,
-                  label: 'Rekap',
-                  isSelected: true,
-                  onTap: () => Navigator.pop(context),
-                ),
-                _NavDrawerItem(
-                  icon: Icons.history,
-                  label: 'History',
-                  onTap: () {
-                    Navigator.pop(context);
-                    widget.onNavigateToHistory?.call();
-                  },
-                ),
-                _NavDrawerItem(
-                  icon: Icons.settings,
-                  label: 'Setting',
-                  onTap: () {
-                    Navigator.pop(context);
-                    widget.onNavigateToSettings?.call();
-                  },
-                ),
-              ],
-            ),
-          ),
-          const Divider(height: 1),
-          _NavDrawerItem(
-            icon: Icons.logout,
-            label: 'Log Out',
-            textColor: AppColors.error,
-            onTap: () {
-              Navigator.pop(context);
-              widget.onLogout?.call();
-            },
-          ),
-          const SizedBox(height: 8),
-        ],
-      ),
-    );
-  }
 }
 
 class _SummaryRow extends StatelessWidget {
@@ -259,24 +218,35 @@ class _SummaryRow extends StatelessWidget {
   @override
   Widget build(BuildContext context) {
     return Padding(
-      padding: const EdgeInsets.symmetric(vertical: 4),
+      padding: const EdgeInsets.symmetric(vertical: 6),
       child: Row(
         mainAxisAlignment: MainAxisAlignment.spaceBetween,
         children: [
           Column(
             crossAxisAlignment: CrossAxisAlignment.start,
             children: [
-              Text(label),
+              Text(
+                label,
+                style: const TextStyle(
+                  color: AppColors.grey700,
+                ),
+              ),
               if (note != null)
                 Text(
                   note!,
-                  style: const TextStyle(fontSize: 10, color: AppColors.grey500),
+                  style: const TextStyle(
+                    fontSize: 10,
+                    color: AppColors.grey500,
+                  ),
                 ),
             ],
           ),
           Text(
             value,
-            style: const TextStyle(fontWeight: FontWeight.w600),
+            style: const TextStyle(
+              fontWeight: FontWeight.w600,
+              color: AppColors.textPrimary,
+            ),
           ),
         ],
       ),
@@ -298,18 +268,34 @@ class _CategoryRow extends StatelessWidget {
   @override
   Widget build(BuildContext context) {
     return Padding(
-      padding: const EdgeInsets.symmetric(vertical: 4),
+      padding: const EdgeInsets.symmetric(vertical: 6),
       child: Row(
-        mainAxisAlignment: MainAxisAlignment.spaceBetween,
         children: [
-          Text(category),
-          Text(
-            '$count items',
-            style: const TextStyle(color: AppColors.grey600),
+          Container(
+            width: 8,
+            height: 8,
+            decoration: BoxDecoration(
+              color: AppColors.secondary.withValues(alpha: 0.6),
+              shape: BoxShape.circle,
+            ),
+          ),
+          const SizedBox(width: 12),
+          Expanded(
+            child: Text(category),
           ),
           Text(
+            '$count items',
+            style: const TextStyle(
+              color: AppColors.grey600,
+              fontSize: 13,
+            ),
+          ),
+          const SizedBox(width: 16),
+          Text(
             _formatPrice(amount),
-            style: const TextStyle(fontWeight: FontWeight.w600),
+            style: const TextStyle(
+              fontWeight: FontWeight.w600,
+            ),
           ),
         ],
       ),
@@ -321,38 +307,5 @@ class _CategoryRow extends StatelessWidget {
           RegExp(r'(\d{1,3})(?=(\d{3})+(?!\d))'),
           (Match m) => '${m[1]}.',
         )}';
-  }
-}
-
-class _NavDrawerItem extends StatelessWidget {
-  final IconData icon;
-  final String label;
-  final bool isSelected;
-  final Color? textColor;
-  final VoidCallback onTap;
-
-  const _NavDrawerItem({
-    required this.icon,
-    required this.label,
-    this.isSelected = false,
-    this.textColor,
-    required this.onTap,
-  });
-
-  @override
-  Widget build(BuildContext context) {
-    return ListTile(
-      leading: Icon(icon, color: isSelected ? AppColors.primary : (textColor ?? AppColors.grey700)),
-      title: Text(
-        label,
-        style: TextStyle(
-          color: textColor ?? (isSelected ? AppColors.primary : AppColors.textPrimary),
-          fontWeight: isSelected ? FontWeight.w600 : FontWeight.normal,
-        ),
-      ),
-      selected: isSelected,
-      selectedTileColor: AppColors.primary.withValues(alpha: 0.1),
-      onTap: onTap,
-    );
   }
 }

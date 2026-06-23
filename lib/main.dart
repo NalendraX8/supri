@@ -66,7 +66,7 @@ class AppNavigator extends StatelessWidget {
           if (state.needsOutletSelection) {
             return const OutletSelectionPage();
           }
-          return MainNavigator(initialIndex: 0);
+          return const MainNavigator();
         }
 
         return const LoginPage();
@@ -75,157 +75,171 @@ class AppNavigator extends StatelessWidget {
   }
 }
 
+/// Main navigation wrapper using drawer only (no bottom nav bar)
 class MainNavigator extends StatefulWidget {
-  final int initialIndex;
-
-  const MainNavigator({super.key, this.initialIndex = 0});
+  const MainNavigator({super.key});
 
   @override
-  State<MainNavigator> createState() => _MainNavigatorState();
+  State<MainNavigator> createState() => MainNavigatorState();
 }
 
-class _MainNavigatorState extends State<MainNavigator> {
-  late int _currentIndex;
-  final List<GlobalKey<NavigatorState>> _navigatorKeys = List.generate(
-    3,
-    (_) => GlobalKey<NavigatorState>(),
-  );
+class MainNavigatorState extends State<MainNavigator> {
+  int _currentPage = 0; // 0=Sales, 1=Kas, 2=History, 3=Rekap, 4=Settings
 
-  // Expose navigatorKeys for external navigation
-  List<GlobalKey<NavigatorState>> get navigatorKeys => _navigatorKeys;
-
-  @override
-  void initState() {
-    super.initState();
-    _currentIndex = widget.initialIndex;
-  }
-
-  void _onTabTapped(int index) {
-    if (index == _currentIndex) {
-      _navigatorKeys[index].currentState?.popUntil((route) => route.isFirst);
-    } else {
-      setState(() => _currentIndex = index);
-    }
+  void navigateTo(int index) {
+    setState(() => _currentPage = index);
   }
 
   @override
   Widget build(BuildContext context) {
     return Scaffold(
       body: IndexedStack(
-        index: _currentIndex,
+        index: _currentPage,
         children: [
-          _buildNavigator(0, _SalesWrapper()),
-          _buildNavigator(1, HistoryPage()),
-          _buildNavigator(2, _SettingsWrapper()),
+          _buildPage(0, const SalesPage(
+            onNavigateToHistory: null,
+            onNavigateToKas: null,
+            onNavigateToRekap: null,
+            onNavigateToSettings: null,
+            onLogout: null,
+          )),
+          _buildPage(1, KasPage(
+            onNavigateToSales: null,
+            onNavigateToHistory: null,
+            onNavigateToRekap: null,
+            onNavigateToSettings: null,
+            onLogout: null,
+          )),
+          _buildPage(2, HistoryPage(
+            onNavigateToSales: null,
+            onNavigateToKas: null,
+            onNavigateToRekap: null,
+            onNavigateToSettings: null,
+            onLogout: null,
+          )),
+          _buildPage(3, RekapPage(
+            onNavigateToSales: null,
+            onNavigateToHistory: null,
+            onNavigateToKas: null,
+            onNavigateToSettings: null,
+            onLogout: null,
+          )),
+          _buildPage(4, SettingsPage(
+            onNavigateToSales: null,
+            onNavigateToHistory: null,
+            onNavigateToKas: null,
+            onNavigateToRekap: null,
+            onLogout: null,
+          )),
         ],
       ),
-      bottomNavigationBar: BottomNavigationBar(
-        currentIndex: _currentIndex,
-        onTap: _onTabTapped,
-        selectedItemColor: Theme.of(context).primaryColor,
-        unselectedItemColor: Colors.grey,
-        type: BottomNavigationBarType.fixed,
-        items: const [
-          BottomNavigationBarItem(
-            icon: Icon(Icons.point_of_sale),
-            label: 'Sales',
+      // No bottom navigation bar - using drawer only like Zales
+    );
+  }
+
+  Widget _buildPage(int index, Widget page) {
+    return _PageWrapper(
+      pageIndex: index,
+      currentPage: _currentPage,
+      onNavigate: navigateTo,
+      child: page,
+    );
+  }
+}
+
+/// Wrapper to inject navigation callbacks into pages
+class _PageWrapper extends StatefulWidget {
+  final int pageIndex;
+  final int currentPage;
+  final Function(int) onNavigate;
+  final Widget child;
+
+  const _PageWrapper({
+    required this.pageIndex,
+    required this.currentPage,
+    required this.onNavigate,
+    required this.child,
+  });
+
+  @override
+  State<_PageWrapper> createState() => _PageWrapperState();
+}
+
+class _PageWrapperState extends State<_PageWrapper> {
+  @override
+  Widget build(BuildContext context) {
+    return _NavigationProvider(
+      onNavigateToSales: () => widget.onNavigate(0),
+      onNavigateToKas: () => widget.onNavigate(1),
+      onNavigateToHistory: () => widget.onNavigate(2),
+      onNavigateToRekap: () => widget.onNavigate(3),
+      onNavigateToSettings: () => widget.onNavigate(4),
+      onLogout: () => _logout(context),
+      child: widget.child,
+    );
+  }
+
+  void _logout(BuildContext context) {
+    showDialog(
+      context: context,
+      builder: (ctx) => AlertDialog(
+        title: const Text('Logout'),
+        content: const Text('Are you sure you want to logout?'),
+        actions: [
+          TextButton(
+            onPressed: () => Navigator.pop(ctx),
+            child: const Text('CANCEL'),
           ),
-          BottomNavigationBarItem(
-            icon: Icon(Icons.history),
-            label: 'History',
-          ),
-          BottomNavigationBarItem(
-            icon: Icon(Icons.settings),
-            label: 'Settings',
+          ElevatedButton(
+            onPressed: () {
+              Navigator.pop(ctx);
+              context.read<AuthBloc>().add(const LogoutEvent());
+            },
+            child: const Text('LOGOUT'),
           ),
         ],
       ),
     );
   }
-
-  Widget _buildNavigator(int index, Widget child) {
-    return Navigator(
-      key: _navigatorKeys[index],
-      onGenerateRoute: (settings) {
-        return MaterialPageRoute(builder: (_) => child);
-      },
-    );
-  }
 }
 
-// Wrappers to handle navigation callbacks
-class _SalesWrapper extends StatelessWidget {
+/// Provides navigation callbacks to child widgets
+class _NavigationProvider extends InheritedWidget {
+  final VoidCallback onNavigateToSales;
+  final VoidCallback onNavigateToKas;
+  final VoidCallback onNavigateToHistory;
+  final VoidCallback onNavigateToRekap;
+  final VoidCallback onNavigateToSettings;
+  final VoidCallback onLogout;
+
+  const _NavigationProvider({
+    required this.onNavigateToSales,
+    required this.onNavigateToKas,
+    required this.onNavigateToHistory,
+    required this.onNavigateToRekap,
+    required this.onNavigateToSettings,
+    required this.onLogout,
+    required super.child,
+  });
+
+  static _NavigationProvider of(BuildContext context) {
+    final provider = context.dependOnInheritedWidgetOfExactType<_NavigationProvider>();
+    if (provider == null) {
+      throw FlutterError('No _NavigationProvider found in context');
+    }
+    return provider;
+  }
+
   @override
-  Widget build(BuildContext context) {
-    return SalesPage(
-      onNavigateToHistory: () => _navigateTo(context, 1),
-      onNavigateToKas: () => _showKasPage(context),
-      onNavigateToRekap: () => _showRekapPage(context),
-      onNavigateToSettings: () => _navigateTo(context, 2),
-      onLogout: () => _logout(context),
-    );
-  }
+  bool updateShouldNotify(_NavigationProvider oldWidget) => false;
 }
 
-class _SettingsWrapper extends StatelessWidget {
-  @override
-  Widget build(BuildContext context) {
-    return SettingsPage(
-      onNavigateToSales: () => _navigateTo(context, 0),
-      onNavigateToHistory: () => _navigateTo(context, 1),
-      onNavigateToKas: () => _showKasPage(context),
-      onNavigateToRekap: () => _showRekapPage(context),
-      onLogout: () => _logout(context),
-    );
-  }
-}
-
-void _navigateTo(BuildContext context, int index) {
-  final mainState = context.findAncestorStateOfType<_MainNavigatorState>();
-  mainState?._onTabTapped(index);
-}
-
-void _showKasPage(BuildContext context) {
-  final mainState = context.findAncestorStateOfType<_MainNavigatorState>();
-  mainState?._navigatorKeys[1].currentState?.push(
-    MaterialPageRoute(builder: (_) => const KasPage()),
-  );
-}
-
-void _showRekapPage(BuildContext context) {
-  final mainState = context.findAncestorStateOfType<_MainNavigatorState>();
-  mainState?._navigatorKeys[2].currentState?.push(
-    MaterialPageRoute(
-      builder: (_) => RekapPage(
-        onNavigateToSales: () => _navigateTo(context, 0),
-        onNavigateToHistory: () => _navigateTo(context, 1),
-        onNavigateToKas: () => _showKasPage(context),
-        onNavigateToSettings: () => _navigateTo(context, 2),
-        onLogout: () => _logout(context),
-      ),
-    ),
-  );
-}
-
-void _logout(BuildContext context) {
-  showDialog(
-    context: context,
-    builder: (ctx) => AlertDialog(
-      title: const Text('Logout'),
-      content: const Text('Are you sure you want to logout?'),
-      actions: [
-        TextButton(
-          onPressed: () => Navigator.pop(ctx),
-          child: const Text('CANCEL'),
-        ),
-        ElevatedButton(
-          onPressed: () {
-            Navigator.pop(ctx);
-            context.read<AuthBloc>().add(const LogoutEvent());
-          },
-          child: const Text('LOGOUT'),
-        ),
-      ],
-    ),
-  );
+/// Extension to easily access navigation from any context
+extension NavigationExtension on BuildContext {
+  void navigateToSales() => _NavigationProvider.of(this).onNavigateToSales();
+  void navigateToKas() => _NavigationProvider.of(this).onNavigateToKas();
+  void navigateToHistory() => _NavigationProvider.of(this).onNavigateToHistory();
+  void navigateToRekap() => _NavigationProvider.of(this).onNavigateToRekap();
+  void navigateToSettings() => _NavigationProvider.of(this).onNavigateToSettings();
+  void logout() => _NavigationProvider.of(this).onLogout();
 }

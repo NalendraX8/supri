@@ -2,6 +2,8 @@ import 'package:flutter/material.dart';
 
 import '../../../../core/theme/app_colors.dart';
 import '../../../../core/widgets/app_card.dart';
+import '../../../../core/widgets/app_drawer.dart';
+import '../../../../main.dart';
 
 /// Kas (Cash Management) page.
 class KasPage extends StatelessWidget {
@@ -39,7 +41,15 @@ class KasPage extends StatelessWidget {
           ),
         ],
       ),
-      drawer: _buildDrawer(context),
+      drawer: AppDrawer(
+        currentRoute: 'kas',
+        onNavigateToSales: () => context.navigateToSales(),
+        onNavigateToKas: () => context.navigateToKas(),
+        onNavigateToRekap: () => context.navigateToRekap(),
+        onNavigateToHistory: () => context.navigateToHistory(),
+        onNavigateToSettings: () => context.navigateToSettings(),
+        onLogout: () => context.logout(),
+      ),
       body: Column(
         children: [
           // Header
@@ -47,12 +57,22 @@ class KasPage extends StatelessWidget {
             padding: const EdgeInsets.all(16),
             child: Row(
               children: [
-                const Icon(Icons.account_balance_wallet, color: AppColors.primary),
-                const SizedBox(width: 8),
+                Container(
+                  padding: const EdgeInsets.all(12),
+                  decoration: BoxDecoration(
+                    color: AppColors.success.withValues(alpha: 0.1),
+                    borderRadius: BorderRadius.circular(12),
+                  ),
+                  child: const Icon(
+                    Icons.account_balance_wallet,
+                    color: AppColors.success,
+                  ),
+                ),
+                const SizedBox(width: 12),
                 const Text(
                   'Cash Management',
                   style: TextStyle(
-                    fontSize: 18,
+                    fontSize: 20,
                     fontWeight: FontWeight.bold,
                   ),
                 ),
@@ -116,6 +136,9 @@ class KasPage extends StatelessWidget {
                       backgroundColor: AppColors.success,
                       foregroundColor: AppColors.textOnPrimary,
                       padding: const EdgeInsets.symmetric(vertical: 16),
+                      shape: RoundedRectangleBorder(
+                        borderRadius: BorderRadius.circular(12),
+                      ),
                     ),
                   ),
                 ),
@@ -133,108 +156,15 @@ class KasPage extends StatelessWidget {
                       backgroundColor: AppColors.kasKeluar,
                       foregroundColor: AppColors.textOnPrimary,
                       padding: const EdgeInsets.symmetric(vertical: 16),
+                      shape: RoundedRectangleBorder(
+                        borderRadius: BorderRadius.circular(12),
+                      ),
                     ),
                   ),
                 ),
               ],
             ),
           ),
-        ],
-      ),
-    );
-  }
-
-  Widget _buildDrawer(BuildContext context) {
-    return Drawer(
-      child: Column(
-        children: [
-          Container(
-            width: double.infinity,
-            padding: EdgeInsets.only(
-              top: MediaQuery.of(context).padding.top + 24,
-              left: 20,
-              right: 20,
-              bottom: 20,
-            ),
-            color: AppColors.primary,
-            child: Column(
-              crossAxisAlignment: CrossAxisAlignment.start,
-              children: [
-                Container(
-                  padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 8),
-                  decoration: BoxDecoration(
-                    color: Colors.black,
-                    borderRadius: BorderRadius.circular(8),
-                  ),
-                  child: const Text(
-                    'Supri',
-                    style: TextStyle(
-                      color: AppColors.primary,
-                      fontSize: 24,
-                      fontWeight: FontWeight.w900,
-                      fontStyle: FontStyle.italic,
-                    ),
-                  ),
-                ),
-              ],
-            ),
-          ),
-          Expanded(
-            child: ListView(
-              padding: EdgeInsets.zero,
-              children: [
-                _DrawerItem(
-                  icon: Icons.shopping_cart,
-                  label: 'Sales',
-                  onTap: () {
-                    Navigator.pop(context);
-                    onNavigateToSales?.call();
-                  },
-                ),
-                _DrawerItem(
-                  icon: Icons.account_balance_wallet,
-                  label: 'Kas',
-                  isSelected: true,
-                  onTap: () => Navigator.pop(context),
-                ),
-                _DrawerItem(
-                  icon: Icons.bar_chart,
-                  label: 'Rekap',
-                  onTap: () {
-                    Navigator.pop(context);
-                    onNavigateToRekap?.call();
-                  },
-                ),
-                _DrawerItem(
-                  icon: Icons.history,
-                  label: 'History',
-                  onTap: () {
-                    Navigator.pop(context);
-                    onNavigateToHistory?.call();
-                  },
-                ),
-                _DrawerItem(
-                  icon: Icons.settings,
-                  label: 'Setting',
-                  onTap: () {
-                    Navigator.pop(context);
-                    onNavigateToSettings?.call();
-                  },
-                ),
-              ],
-            ),
-          ),
-          const Divider(height: 1),
-          _DrawerItem(
-            icon: Icons.logout,
-            label: 'Log Out',
-            textColor: AppColors.error,
-            onTap: () {
-              Navigator.pop(context);
-              onLogout?.call();
-            },
-          ),
-          const SizedBox(height: 8),
         ],
       ),
     );
@@ -259,54 +189,62 @@ class _KasItem extends StatelessWidget {
   @override
   Widget build(BuildContext context) {
     return AppCard(
-      padding: const EdgeInsets.all(12),
+      padding: const EdgeInsets.all(16),
       child: Row(
         children: [
-          // Date
-          Column(
-            crossAxisAlignment: CrossAxisAlignment.start,
-            children: [
-              Row(
-                children: [
-                  const Icon(Icons.schedule, size: 14, color: AppColors.grey500),
-                  const SizedBox(width: 4),
-                  Text(
-                    date,
-                    style: const TextStyle(fontSize: 12, color: AppColors.grey600),
-                  ),
-                ],
-              ),
-              const SizedBox(height: 4),
-              Text(
-                type,
-                style: TextStyle(
-                  fontWeight: FontWeight.w600,
-                  color: isIncome ? AppColors.success : AppColors.error,
-                ),
-              ),
-              Text(
-                category,
-                style: const TextStyle(fontSize: 12, color: AppColors.grey500),
-              ),
-            ],
+          // Icon indicator
+          Container(
+            padding: const EdgeInsets.all(10),
+            decoration: BoxDecoration(
+              color: (isIncome ? AppColors.success : AppColors.error)
+                  .withValues(alpha: 0.1),
+              borderRadius: BorderRadius.circular(10),
+            ),
+            child: Icon(
+              isIncome ? Icons.arrow_downward : Icons.arrow_upward,
+              color: isIncome ? AppColors.success : AppColors.error,
+              size: 20,
+            ),
           ),
-          const Spacer(),
-          // Amount
-          Row(
-            children: [
-              Icon(
-                isIncome ? Icons.arrow_downward : Icons.arrow_upward,
-                size: 16,
-                color: isIncome ? AppColors.success : AppColors.error,
-              ),
-              Text(
-                _formatPrice(amount),
-                style: TextStyle(
-                  fontWeight: FontWeight.bold,
-                  color: isIncome ? AppColors.success : AppColors.error,
+          const SizedBox(width: 12),
+          // Date and details
+          Expanded(
+            child: Column(
+              crossAxisAlignment: CrossAxisAlignment.start,
+              children: [
+                Row(
+                  children: [
+                    const Icon(Icons.schedule, size: 14, color: AppColors.grey500),
+                    const SizedBox(width: 4),
+                    Text(
+                      date,
+                      style: const TextStyle(fontSize: 12, color: AppColors.grey600),
+                    ),
+                  ],
                 ),
-              ),
-            ],
+                const SizedBox(height: 4),
+                Text(
+                  type,
+                  style: TextStyle(
+                    fontWeight: FontWeight.w600,
+                    color: isIncome ? AppColors.success : AppColors.error,
+                  ),
+                ),
+                Text(
+                  category,
+                  style: const TextStyle(fontSize: 12, color: AppColors.grey500),
+                ),
+              ],
+            ),
+          ),
+          // Amount
+          Text(
+            _formatPrice(amount),
+            style: TextStyle(
+              fontWeight: FontWeight.bold,
+              fontSize: 16,
+              color: isIncome ? AppColors.success : AppColors.error,
+            ),
           ),
         ],
       ),
@@ -318,38 +256,5 @@ class _KasItem extends StatelessWidget {
           RegExp(r'(\d{1,3})(?=(\d{3})+(?!\d))'),
           (Match m) => '${m[1]}.',
         )}';
-  }
-}
-
-class _DrawerItem extends StatelessWidget {
-  final IconData icon;
-  final String label;
-  final bool isSelected;
-  final Color? textColor;
-  final VoidCallback onTap;
-
-  const _DrawerItem({
-    required this.icon,
-    required this.label,
-    this.isSelected = false,
-    this.textColor,
-    required this.onTap,
-  });
-
-  @override
-  Widget build(BuildContext context) {
-    return ListTile(
-      leading: Icon(icon, color: isSelected ? AppColors.primary : (textColor ?? AppColors.grey700)),
-      title: Text(
-        label,
-        style: TextStyle(
-          color: textColor ?? (isSelected ? AppColors.primary : AppColors.textPrimary),
-          fontWeight: isSelected ? FontWeight.w600 : FontWeight.normal,
-        ),
-      ),
-      selected: isSelected,
-      selectedTileColor: AppColors.primary.withValues(alpha: 0.1),
-      onTap: onTap,
-    );
   }
 }

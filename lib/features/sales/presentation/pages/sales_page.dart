@@ -4,6 +4,7 @@ import 'package:flutter/material.dart';
 import 'package:flutter_bloc/flutter_bloc.dart';
 
 import '../../../../core/theme/app_colors.dart';
+import '../../../../core/widgets/app_drawer.dart';
 import '../../domain/entities/product_entity.dart';
 import '../bloc/sales_bloc.dart';
 import '../bloc/sales_event.dart';
@@ -13,6 +14,7 @@ import '../widgets/cart_detail_sheet.dart';
 import '../widgets/category_chips.dart';
 import '../widgets/discount_dialog.dart';
 import '../widgets/product_card.dart';
+import '../../../../main.dart';
 
 /// Main Sales/Home page - the primary POS screen with static data.
 class SalesPage extends StatefulWidget {
@@ -43,7 +45,6 @@ class _SalesPageState extends State<SalesPage> {
   @override
   void initState() {
     super.initState();
-    // Load products from API
     context.read<SalesBloc>().add(const LoadProductsEvent());
   }
 
@@ -210,9 +211,7 @@ class _SalesPageState extends State<SalesPage> {
           ElevatedButton(
             onPressed: () {
               Navigator.pop(ctx);
-              context
-                  .read<SalesBloc>()
-                  .add(SetCustomerEvent(controller.text));
+              context.read<SalesBloc>().add(SetCustomerEvent(controller.text));
             },
             child: const Text('SAVE'),
           ),
@@ -269,15 +268,21 @@ class _SalesPageState extends State<SalesPage> {
           ),
         ],
       ),
-      drawer: _buildDrawer(),
+      drawer: AppDrawer(
+        currentRoute: 'sales',
+        onNavigateToSales: () => context.navigateToSales(),
+        onNavigateToKas: () => context.navigateToKas(),
+        onNavigateToRekap: () => context.navigateToRekap(),
+        onNavigateToHistory: () => context.navigateToHistory(),
+        onNavigateToSettings: () => context.navigateToSettings(),
+        onLogout: () => context.logout(),
+      ),
       body: BlocBuilder<SalesBloc, SalesState>(
         builder: (context, state) {
-          // Handle loading state
           if (state is SalesLoading) {
             return const Center(child: CircularProgressIndicator());
           }
 
-          // Handle error state
           if (state is SalesError) {
             return Center(
               child: Column(
@@ -301,12 +306,10 @@ class _SalesPageState extends State<SalesPage> {
             );
           }
 
-          // Handle initial state
           if (state is SalesInitial) {
             return const Center(child: CircularProgressIndicator());
           }
 
-          // Handle SalesLoaded and SalesHeld states
           final products = state is SalesLoaded ? state.filteredProducts : <ProductEntity>[];
           final cart = state is SalesLoaded ? state.cart : const CartEntity();
 
@@ -323,8 +326,12 @@ class _SalesPageState extends State<SalesPage> {
                     filled: true,
                     fillColor: AppColors.surface,
                     border: OutlineInputBorder(
-                      borderRadius: BorderRadius.circular(8),
+                      borderRadius: BorderRadius.circular(12),
                       borderSide: BorderSide.none,
+                    ),
+                    contentPadding: const EdgeInsets.symmetric(
+                      horizontal: 16,
+                      vertical: 12,
                     ),
                   ),
                   onChanged: (query) {
@@ -346,7 +353,26 @@ class _SalesPageState extends State<SalesPage> {
               // Product grid
               Expanded(
                 child: products.isEmpty
-                    ? const Center(child: Text('No products found'))
+                    ? Center(
+                        child: Column(
+                          mainAxisAlignment: MainAxisAlignment.center,
+                          children: [
+                            Icon(
+                              Icons.search_off,
+                              size: 64,
+                              color: AppColors.grey400,
+                            ),
+                            const SizedBox(height: 16),
+                            Text(
+                              'Produk tidak ditemukan',
+                              style: TextStyle(
+                                fontSize: 16,
+                                color: AppColors.grey600,
+                              ),
+                            ),
+                          ],
+                        ),
+                      )
                     : GridView.builder(
                         padding: const EdgeInsets.all(16),
                         gridDelegate: const SliverGridDelegateWithFixedCrossAxisCount(
@@ -358,9 +384,12 @@ class _SalesPageState extends State<SalesPage> {
                         itemCount: products.length,
                         itemBuilder: (context, index) {
                           final product = products[index];
+                          final hasDiscount = index % 4 == 0;
                           return ProductCard(
                             product: product,
                             onTap: () => context.read<SalesBloc>().add(AddToCartEvent(product.id)),
+                            hasDiscount: hasDiscount,
+                            discountPercent: hasDiscount ? 15 : null,
                           );
                         },
                       ),
@@ -379,160 +408,11 @@ class _SalesPageState extends State<SalesPage> {
   }
 
   String? _getSelectedCategory(SalesLoaded state) {
-    // Find which category is selected by checking filteredProducts
-    // If filtered products are fewer than all products, a category is selected
     if (state.products.length != state.filteredProducts.length) {
       return state.filteredProducts.isNotEmpty
           ? state.filteredProducts.first.category
           : null;
     }
     return null;
-  }
-
-  Widget _buildDrawer() {
-    return Drawer(
-      child: Column(
-        children: [
-          // Header
-          Container(
-            width: double.infinity,
-            padding: EdgeInsets.only(
-              top: MediaQuery.of(context).padding.top + 24,
-              left: 20,
-              right: 20,
-              bottom: 20,
-            ),
-            color: AppColors.primary,
-            child: Column(
-              crossAxisAlignment: CrossAxisAlignment.start,
-              children: [
-                Container(
-                  padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 8),
-                  decoration: BoxDecoration(
-                    color: Colors.black,
-                    borderRadius: BorderRadius.circular(8),
-                  ),
-                  child: const Text(
-                    'Supri',
-                    style: TextStyle(
-                      color: AppColors.primary,
-                      fontSize: 24,
-                      fontWeight: FontWeight.w900,
-                      fontStyle: FontStyle.italic,
-                    ),
-                  ),
-                ),
-                const SizedBox(height: 12),
-                const Text(
-                  'demo@supri.id',
-                  style: TextStyle(color: AppColors.textOnPrimary, fontSize: 12),
-                ),
-                const Text(
-                  'Toko Utama',
-                  style: TextStyle(
-                    color: AppColors.textOnPrimary,
-                    fontSize: 14,
-                    fontWeight: FontWeight.w600,
-                  ),
-                ),
-              ],
-            ),
-          ),
-          // Menu items
-          Expanded(
-            child: ListView(
-              padding: EdgeInsets.zero,
-              children: [
-                _DrawerItem(
-                  icon: Icons.shopping_cart,
-                  label: 'Sales',
-                  isSelected: true,
-                  onTap: () => Navigator.pop(context),
-                ),
-                _DrawerItem(
-                  icon: Icons.account_balance_wallet,
-                  label: 'Kas',
-                  onTap: () {
-                    Navigator.pop(context);
-                    widget.onNavigateToKas?.call();
-                  },
-                ),
-                _DrawerItem(
-                  icon: Icons.bar_chart,
-                  label: 'Rekap',
-                  onTap: () {
-                    Navigator.pop(context);
-                    widget.onNavigateToRekap?.call();
-                  },
-                ),
-                _DrawerItem(
-                  icon: Icons.history,
-                  label: 'History',
-                  onTap: () {
-                    Navigator.pop(context);
-                    widget.onNavigateToHistory?.call();
-                  },
-                ),
-                _DrawerItem(
-                  icon: Icons.settings,
-                  label: 'Setting',
-                  onTap: () {
-                    Navigator.pop(context);
-                    widget.onNavigateToSettings?.call();
-                  },
-                ),
-              ],
-            ),
-          ),
-          const Divider(height: 1),
-          _DrawerItem(
-            icon: Icons.logout,
-            label: 'Log Out',
-            textColor: AppColors.error,
-            onTap: () {
-              Navigator.pop(context);
-              widget.onLogout?.call();
-            },
-          ),
-          const SizedBox(height: 8),
-        ],
-      ),
-    );
-  }
-}
-
-class _DrawerItem extends StatelessWidget {
-  final IconData icon;
-  final String label;
-  final bool isSelected;
-  final Color? textColor;
-  final VoidCallback onTap;
-
-  const _DrawerItem({
-    required this.icon,
-    required this.label,
-    this.isSelected = false,
-    this.textColor,
-    required this.onTap,
-  });
-
-  @override
-  Widget build(BuildContext context) {
-    return ListTile(
-      leading: Icon(
-        icon,
-        color: isSelected ? AppColors.primary : (textColor ?? AppColors.grey700),
-      ),
-      title: Text(
-        label,
-        style: TextStyle(
-          color: textColor ?? (isSelected ? AppColors.primary : AppColors.textPrimary),
-          fontWeight: isSelected ? FontWeight.w600 : FontWeight.normal,
-        ),
-      ),
-      selected: isSelected,
-      selectedTileColor: AppColors.primary.withValues(alpha: 0.1),
-      onTap: onTap,
-    );
   }
 }
