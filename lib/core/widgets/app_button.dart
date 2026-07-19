@@ -1,5 +1,6 @@
 import 'package:flutter/material.dart';
 
+import 'package:flutter_spinkit/flutter_spinkit.dart';
 import '../theme/app_colors.dart';
 
 /// Reusable app button with primary/secondary variants.
@@ -48,13 +49,9 @@ class AppButton extends StatelessWidget {
     }
 
     Widget child = isLoading
-        ? SizedBox(
-            height: 20,
-            width: 20,
-            child: CircularProgressIndicator(
-              strokeWidth: 2,
-              valueColor: AlwaysStoppedAnimation<Color>(foregroundColor),
-            ),
+        ? SpinKitThreeBounce(
+            color: foregroundColor,
+            size: 20,
           )
         : Row(
             mainAxisSize: MainAxisSize.min,

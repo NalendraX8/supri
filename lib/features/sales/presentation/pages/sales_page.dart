@@ -13,6 +13,7 @@ import '../widgets/cart_detail_sheet.dart';
 import '../widgets/category_chips.dart';
 import '../widgets/discount_dialog.dart';
 import '../widgets/product_card.dart';
+import '../widgets/product_skeleton.dart';
 
 /// Main Sales/Home page - the primary POS screen with static data.
 class SalesPage extends StatefulWidget {
@@ -260,132 +261,138 @@ class _SalesPageState extends State<SalesPage> {
           ),
         ],
       ),
-      body: BlocBuilder<SalesBloc, SalesState>(
-        builder: (context, state) {
-          if (state is SalesLoading) {
-            return const Center(child: CircularProgressIndicator());
-          }
-
-          if (state is SalesError) {
-            return Center(
-              child: Column(
-                mainAxisAlignment: MainAxisAlignment.center,
-                children: [
-                  Icon(Icons.error_outline, size: 48, color: AppColors.error),
-                  const SizedBox(height: 16),
-                  Text(
-                    'Failed to load products',
-                    style: TextStyle(color: AppColors.error),
-                  ),
-                  const SizedBox(height: 8),
-                  ElevatedButton(
-                    onPressed: () {
-                      context.read<SalesBloc>().add(const LoadProductsEvent());
-                    },
-                    child: const Text('Retry'),
-                  ),
-                ],
-              ),
-            );
-          }
-
-          if (state is SalesInitial) {
-            return const Center(child: CircularProgressIndicator());
-          }
-
-          final products = state is SalesLoaded ? state.filteredProducts : <ProductEntity>[];
-          final cart = state is SalesLoaded ? state.cart : const CartEntity();
-
-          return Column(
-            children: [
-              // Search bar
-              Padding(
-                padding: const EdgeInsets.all(16),
-                child: TextField(
-                  controller: _searchController,
-                  decoration: InputDecoration(
-                    hintText: 'Search Item',
-                    prefixIcon: const Icon(Icons.search),
-                    filled: true,
-                    fillColor: AppColors.surface,
-                    border: OutlineInputBorder(
-                      borderRadius: BorderRadius.circular(12),
-                      borderSide: BorderSide.none,
-                    ),
-                    contentPadding: const EdgeInsets.symmetric(
-                      horizontal: 16,
-                      vertical: 12,
-                    ),
-                  ),
-                  onChanged: (query) {
-                    _debounceTimer?.cancel();
-                    _debounceTimer = Timer(const Duration(milliseconds: 300), () {
-                      context.read<SalesBloc>().add(SearchProductsEvent(query));
-                    });
-                  },
+      body: Column(
+        children: [
+          // Search bar
+          Padding(
+            padding: const EdgeInsets.all(16),
+            child: TextField(
+              controller: _searchController,
+              decoration: InputDecoration(
+                hintText: 'Search Item',
+                prefixIcon: const Icon(Icons.search),
+                filled: true,
+                fillColor: AppColors.surface,
+                border: OutlineInputBorder(
+                  borderRadius: BorderRadius.circular(12),
+                  borderSide: BorderSide.none,
+                ),
+                contentPadding: const EdgeInsets.symmetric(
+                  horizontal: 16,
+                  vertical: 12,
                 ),
               ),
-              // Category chips
-              CategoryChips(
+              onChanged: (query) {
+                _debounceTimer?.cancel();
+                _debounceTimer = Timer(const Duration(milliseconds: 300), () {
+                  context.read<SalesBloc>().add(SearchProductsEvent(query));
+                });
+              },
+            ),
+          ),
+          // Category chips
+          BlocBuilder<SalesBloc, SalesState>(
+            buildWhen: (previous, current) => current is SalesLoaded || current is SalesLoading,
+            builder: (context, state) {
+              return CategoryChips(
                 selectedCategory: state is SalesLoaded ? _getSelectedCategory(state) : null,
                 onCategorySelected: (category) {
                   context.read<SalesBloc>().add(FilterCategoryEvent(category));
                 },
-              ),
-              const SizedBox(height: 16),
-              // Product grid
-              Expanded(
-                child: products.isEmpty
-                    ? Center(
-                        child: Column(
-                          mainAxisAlignment: MainAxisAlignment.center,
-                          children: [
-                            Icon(
-                              Icons.search_off,
-                              size: 64,
-                              color: AppColors.grey400,
-                            ),
-                            const SizedBox(height: 16),
-                            Text(
-                              'Produk tidak ditemukan',
-                              style: TextStyle(
-                                fontSize: 16,
-                                color: AppColors.grey600,
-                              ),
-                            ),
-                          ],
+              );
+            },
+          ),
+          const SizedBox(height: 16),
+          // Product grid / skeleton loading
+          Expanded(
+            child: BlocBuilder<SalesBloc, SalesState>(
+              builder: (context, state) {
+                if (state is SalesLoading || state is SalesInitial) {
+                  return const ProductSkeleton();
+                }
+
+                if (state is SalesError) {
+                  return Center(
+                    child: Column(
+                      mainAxisAlignment: MainAxisAlignment.center,
+                      children: [
+                        Icon(Icons.error_outline, size: 48, color: AppColors.error),
+                        const SizedBox(height: 16),
+                        Text(
+                          'Failed to load products',
+                          style: TextStyle(color: AppColors.error),
                         ),
-                      )
-                    : GridView.builder(
-                        padding: const EdgeInsets.all(16),
-                        gridDelegate: const SliverGridDelegateWithFixedCrossAxisCount(
-                          crossAxisCount: 3,
-                          childAspectRatio: 0.75,
-                          crossAxisSpacing: 12,
-                          mainAxisSpacing: 12,
+                        const SizedBox(height: 8),
+                        ElevatedButton(
+                          onPressed: () {
+                            context.read<SalesBloc>().add(const LoadProductsEvent());
+                          },
+                          child: const Text('Retry'),
                         ),
-                        itemCount: products.length,
-                        itemBuilder: (context, index) {
-                          final product = products[index];
-                          final hasDiscount = index % 4 == 0;
-                          return ProductCard(
-                            product: product,
-                            onTap: () => context.read<SalesBloc>().add(AddToCartEvent(product.id)),
-                            hasDiscount: hasDiscount,
-                            discountPercent: hasDiscount ? 15 : null,
-                          );
-                        },
-                      ),
-              ),
-              // Cart bar
-              CartBar(
+                      ],
+                    ),
+                  );
+                }
+
+                final products = state is SalesLoaded ? state.filteredProducts : <ProductEntity>[];
+                if (products.isEmpty) {
+                  return Center(
+                    child: Column(
+                      mainAxisAlignment: MainAxisAlignment.center,
+                      children: [
+                        Icon(
+                          Icons.search_off,
+                          size: 64,
+                          color: AppColors.grey400,
+                        ),
+                        const SizedBox(height: 16),
+                        Text(
+                          'Produk tidak ditemukan',
+                          style: TextStyle(
+                            fontSize: 16,
+                            color: AppColors.grey600,
+                          ),
+                        ),
+                      ],
+                    ),
+                  );
+                }
+
+                return GridView.builder(
+                  padding: const EdgeInsets.all(16),
+                  gridDelegate: const SliverGridDelegateWithFixedCrossAxisCount(
+                    crossAxisCount: 3,
+                    childAspectRatio: 0.75,
+                    crossAxisSpacing: 12,
+                    mainAxisSpacing: 12,
+                  ),
+                  itemCount: products.length,
+                  itemBuilder: (context, index) {
+                    final product = products[index];
+                    final hasDiscount = index % 4 == 0;
+                    return ProductCard(
+                      product: product,
+                      onTap: () => context.read<SalesBloc>().add(AddToCartEvent(product.id)),
+                      hasDiscount: hasDiscount,
+                      discountPercent: hasDiscount ? 15 : null,
+                    );
+                  },
+                );
+              },
+            ),
+          ),
+          // Cart bar
+          BlocBuilder<SalesBloc, SalesState>(
+            builder: (context, state) {
+              final cart = state is SalesLoaded ? state.cart : const CartEntity();
+              return CartBar(
                 cart: cart,
                 onChargeTap: cart.isEmpty ? () {} : () => _showCartDetail(cart),
                 onCartTap: cart.isEmpty ? () {} : () => _showCartDetail(cart),
-              ),
-            ],
-          );
-        },
+              );
+            },
+          ),
+        ],
       ),
     );
   }

@@ -1,6 +1,7 @@
 import 'package:flutter/material.dart';
 import 'package:flutter_bloc/flutter_bloc.dart';
 
+import 'package:flutter_spinkit/flutter_spinkit.dart';
 import '../../../../core/theme/app_colors.dart';
 import '../../../../core/widgets/app_card.dart';
 import '../bloc/auth_bloc.dart';
@@ -22,7 +23,12 @@ class OutletSelectionPage extends StatelessWidget {
       body: BlocBuilder<AuthBloc, AuthState>(
         builder: (context, state) {
           if (state is! AuthAuthenticated) {
-            return const Center(child: CircularProgressIndicator());
+            return Center(
+              child: SpinKitFadingCircle(
+                color: AppColors.primary,
+                size: 50.0,
+              ),
+            );
           }
 
           return Padding(
