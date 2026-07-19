@@ -14,6 +14,7 @@ import '../widgets/category_chips.dart';
 import '../widgets/discount_dialog.dart';
 import '../widgets/product_card.dart';
 import '../widgets/product_skeleton.dart';
+import '../widgets/receipt_dialog.dart';
 
 /// Main Sales/Home page - the primary POS screen with static data.
 class SalesPage extends StatefulWidget {
@@ -127,6 +128,9 @@ class _SalesPageState extends State<SalesPage> {
   }
 
   void _showPaymentDialog() {
+    final state = context.read<SalesBloc>().state;
+    final cart = state is SalesLoaded ? state.cart : const CartEntity();
+    
     showDialog(
       context: context,
       builder: (ctx) => AlertDialog(
@@ -139,7 +143,7 @@ class _SalesPageState extends State<SalesPage> {
               title: const Text('QRIS'),
               onTap: () {
                 Navigator.pop(ctx);
-                _showSuccessDialog();
+                _showSuccessDialog(cart);
               },
             ),
             ListTile(
@@ -147,7 +151,7 @@ class _SalesPageState extends State<SalesPage> {
               title: const Text('Cash'),
               onTap: () {
                 Navigator.pop(ctx);
-                _showSuccessDialog();
+                _showSuccessDialog(cart);
               },
             ),
           ],
@@ -162,28 +166,16 @@ class _SalesPageState extends State<SalesPage> {
     );
   }
 
-  void _showSuccessDialog() {
+  void _showSuccessDialog(CartEntity cart) {
     showDialog(
       context: context,
       barrierDismissible: false,
-      builder: (ctx) => AlertDialog(
-        title: const Row(
-          children: [
-            Icon(Icons.check_circle, color: AppColors.success, size: 32),
-            SizedBox(width: 8),
-            Text('Success'),
-          ],
-        ),
-        content: const Text('Payment completed successfully!'),
-        actions: [
-          ElevatedButton(
-            onPressed: () {
-              Navigator.pop(ctx);
-              context.read<SalesBloc>().add(const ClearCartEvent());
-            },
-            child: const Text('DONE'),
-          ),
-        ],
+      builder: (ctx) => ReceiptDialog(
+        cart: cart,
+        onNewTransaction: () {
+          Navigator.pop(ctx);
+          context.read<SalesBloc>().add(const ClearCartEvent());
+        },
       ),
     );
   }
@@ -358,6 +350,8 @@ class _SalesPageState extends State<SalesPage> {
                   );
                 }
 
+                final cart = state is SalesLoaded ? state.cart : const CartEntity();
+
                 return GridView.builder(
                   padding: const EdgeInsets.all(16),
                   gridDelegate: const SliverGridDelegateWithFixedCrossAxisCount(
@@ -370,11 +364,15 @@ class _SalesPageState extends State<SalesPage> {
                   itemBuilder: (context, index) {
                     final product = products[index];
                     final hasDiscount = index % 4 == 0;
+                    final cartItems = cart.items.where((item) => item.product.id == product.id);
+                    final quantityInCart = cartItems.isNotEmpty ? cartItems.first.quantity : 0;
+                    
                     return ProductCard(
                       product: product,
                       onTap: () => context.read<SalesBloc>().add(AddToCartEvent(product.id)),
                       hasDiscount: hasDiscount,
                       discountPercent: hasDiscount ? 15 : null,
+                      quantityInCart: quantityInCart,
                     );
                   },
                 );

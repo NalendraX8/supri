@@ -100,6 +100,7 @@ class ProductCard extends StatefulWidget {
   final bool hasDiscount;
   final int? discountPercent;
   final bool isOutOfStock;
+  final int quantityInCart;
 
   const ProductCard({
     super.key,
@@ -108,6 +109,7 @@ class ProductCard extends StatefulWidget {
     this.hasDiscount = false,
     this.discountPercent,
     this.isOutOfStock = false,
+    this.quantityInCart = 0,
   });
 
   @override
@@ -318,6 +320,40 @@ class _ProductCardState extends State<ProductCard>
                           color: Colors.white,
                           fontSize: 10,
                           fontWeight: FontWeight.bold,
+                        ),
+                      ),
+                    ),
+                  ),
+                // Quantity badge
+                if (widget.quantityInCart > 0)
+                  Positioned(
+                    top: 8,
+                    right: 8,
+                    child: Container(
+                      padding: const EdgeInsets.all(6),
+                      decoration: BoxDecoration(
+                        color: AppColors.primary,
+                        shape: BoxShape.circle,
+                        boxShadow: [
+                          BoxShadow(
+                            color: AppColors.primary.withValues(alpha: 0.4),
+                            blurRadius: 4,
+                            offset: const Offset(0, 2),
+                          ),
+                        ],
+                      ),
+                      constraints: const BoxConstraints(
+                        minWidth: 22,
+                        minHeight: 22,
+                      ),
+                      child: Center(
+                        child: Text(
+                          '${widget.quantityInCart}',
+                          style: const TextStyle(
+                            color: Colors.white,
+                            fontSize: 10,
+                            fontWeight: FontWeight.bold,
+                          ),
                         ),
                       ),
                     ),
