@@ -9,6 +9,8 @@ class AuthEntity extends Equatable {
   final String? outletId;
   final String? outletName;
   final String? companyName;
+  final String? siteName;
+  final String? sessionId;
   final bool isLoggedIn;
 
   const AuthEntity({
@@ -19,6 +21,8 @@ class AuthEntity extends Equatable {
     this.outletId,
     this.outletName,
     this.companyName,
+    this.siteName,
+    this.sessionId,
     this.isLoggedIn = false,
   });
 
@@ -30,6 +34,8 @@ class AuthEntity extends Equatable {
     String? outletId,
     String? outletName,
     String? companyName,
+    String? siteName,
+    String? sessionId,
     bool? isLoggedIn,
   }) {
     return AuthEntity(
@@ -40,10 +46,23 @@ class AuthEntity extends Equatable {
       outletId: outletId ?? this.outletId,
       outletName: outletName ?? this.outletName,
       companyName: companyName ?? this.companyName,
+      siteName: siteName ?? this.siteName,
+      sessionId: sessionId ?? this.sessionId,
       isLoggedIn: isLoggedIn ?? this.isLoggedIn,
     );
   }
 
   @override
-  List<Object?> get props => [userId, name, email, role, outletId, outletName, companyName, isLoggedIn];
+  List<Object?> get props => [
+        userId,
+        name,
+        email,
+        role,
+        outletId,
+        outletName,
+        companyName,
+        siteName,
+        sessionId,
+        isLoggedIn,
+      ];
 }

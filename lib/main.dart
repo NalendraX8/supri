@@ -5,6 +5,7 @@ import 'package:flutter_spinkit/flutter_spinkit.dart';
 import 'core/theme/app_theme.dart';
 import 'core/theme/app_colors.dart';
 import 'features/auth/presentation/bloc/auth_bloc.dart';
+import 'features/auth/presentation/bloc/auth_event.dart';
 import 'features/auth/presentation/bloc/auth_state.dart';
 import 'features/auth/presentation/pages/login_page.dart';
 import 'features/auth/presentation/pages/outlet_selection_page.dart';
@@ -29,7 +30,7 @@ class SupriApp extends StatelessWidget {
   Widget build(BuildContext context) {
     return MultiBlocProvider(
       providers: [
-        BlocProvider(create: (_) => di.sl<AuthBloc>()),
+        BlocProvider(create: (_) => di.sl<AuthBloc>()..add(const AppStartedEvent())),
         BlocProvider(create: (_) => di.sl<SalesBloc>()),
       ],
       child: MaterialApp(
