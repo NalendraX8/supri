@@ -1,16 +1,45 @@
-# supri
+# Supri POS (Point of Sale)
 
-A new Flutter project.
+Point of Sale mobile application clone built with Flutter. Optimized for speed, reliability, and offline-first operations.
 
-## Getting Started
+---
 
-This project is a starting point for a Flutter application.
+## 📖 Technical Documentation
 
-A few resources to get you started if this is your first Flutter project:
+We have established a complete technical blueprint for the planning and design of Supri POS under the `/docs` directory:
 
-- [Lab: Write your first Flutter app](https://docs.flutter.dev/get-started/codelab)
-- [Cookbook: Useful Flutter samples](https://docs.flutter.dev/cookbook)
+* 📋 **Requirements & Scope:** [REQUIREMENTS.md](file:///home/lele/zProject/projects/main_projects/supri/docs/REQUIREMENTS.md)
+* 🚀 **Project Overview & Success Metrics:** [PROJECT_OVERVIEW.md](file:///home/lele/zProject/projects/main_projects/supri/docs/PROJECT_OVERVIEW.md)
+* 🏗️ **Clean Architecture Blueprint:** [ARCHITECTURE.md](file:///home/lele/zProject/projects/main_projects/supri/docs/ARCHITECTURE.md)
+* 🗄️ **Database Schema & Indexes:** [DATABASE.md](file:///home/lele/zProject/projects/main_projects/supri/docs/DATABASE.md)
+* 📡 **REST Sync Endpoints:** [API.md](file:///home/lele/zProject/projects/main_projects/supri/docs/API.md)
+* 🎨 **UI/UX Screens & Flow:** [UI_UX.md](file:///home/lele/zProject/projects/main_projects/supri/docs/UI_UX.md)
+* 💻 **Tech Stack Details:** [TECH_STACK.md](file:///home/lele/zProject/projects/main_projects/supri/docs/TECH_STACK.md)
+* 📝 **Coding Standards:** [CODING_STANDARDS.md](file:///home/lele/zProject/projects/main_projects/supri/docs/CODING_STANDARDS.md)
+* 🧪 **Testing Guidelines:** [TESTING.md](file:///home/lele/zProject/projects/main_projects/supri/docs/TESTING.md)
+* 🚢 **Build & Deployment:** [DEPLOYMENT.md](file:///home/lele/zProject/projects/main_projects/supri/docs/DEPLOYMENT.md)
+* 🗺️ **Feature Roadmap:** [ROADMAP.md](file:///home/lele/zProject/projects/main_projects/supri/docs/ROADMAP.md)
+* 📜 **Changelog:** [CHANGELOG.md](file:///home/lele/zProject/projects/main_projects/supri/docs/CHANGELOG.md)
+* 🤝 **Contributing Guide:** [CONTRIBUTING.md](file:///home/lele/zProject/projects/main_projects/supri/docs/CONTRIBUTING.md)
 
-For help getting started with Flutter development, view the
-[online documentation](https://docs.flutter.dev/), which offers tutorials,
-samples, guidance on mobile development, and a full API reference.
+---
+
+## 🛠️ Getting Started
+
+### Prerequisites
+* Flutter SDK (Targeting iOS 15+ & Android 9+)
+* Dart SDK
+
+### Installation
+1. Fetch packages:
+   ```bash
+   flutter pub get
+   ```
+2. Run unit and widget tests:
+   ```bash
+   flutter test
+   ```
+3. Launch development build:
+   ```bash
+   flutter run
+   ```
