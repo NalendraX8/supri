@@ -1,5 +1,6 @@
 import 'package:flutter_bloc/flutter_bloc.dart';
 
+import '../../../../core/error/exceptions.dart';
 import '../../domain/entities/product_entity.dart';
 import '../../domain/repositories/product_repository.dart';
 import 'sales_event.dart';
@@ -48,7 +49,10 @@ class SalesBloc extends Bloc<SalesEvent, SalesState> {
       _products = await repository.getProducts();
       _emitLoaded(emit);
     } catch (e) {
-      emit(SalesError(e.toString()));
+      final message = e is ServerException
+          ? e.message
+          : e.toString().replaceAll('Exception: ', '').replaceAll('ServerException: ', '');
+      emit(SalesError(message));
     }
   }
 
