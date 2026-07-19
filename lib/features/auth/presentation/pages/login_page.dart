@@ -19,8 +19,8 @@ class LoginPage extends StatefulWidget {
 }
 
 class _LoginPageState extends State<LoginPage> {
-  final _emailController = TextEditingController(text: 'demo@supri.id');
-  final _passwordController = TextEditingController(text: '1234');
+  final _emailController = TextEditingController(text: 'adminpos@demo.com');
+  final _passwordController = TextEditingController(text: 'Zales123@');
   bool _obscurePassword = true;
   String? _errorMessage;
 
