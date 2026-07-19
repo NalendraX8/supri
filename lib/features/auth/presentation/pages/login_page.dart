@@ -1,6 +1,7 @@
 import 'package:flutter/material.dart';
 import 'package:flutter_bloc/flutter_bloc.dart';
 
+import '../../../../core/constants/app_constants.dart';
 import '../../../../core/theme/app_colors.dart';
 import '../../../../core/widgets/app_button.dart';
 import '../bloc/auth_bloc.dart';
@@ -175,21 +176,12 @@ class _LoginPageState extends State<LoginPage> {
   Widget _buildLogo() {
     return Column(
       children: [
-        Container(
-          padding: const EdgeInsets.symmetric(horizontal: 24, vertical: 16),
-          decoration: BoxDecoration(
-            color: Colors.black,
-            borderRadius: BorderRadius.circular(8),
-          ),
-          child: const Text(
-            'Supri',
-            style: TextStyle(
-              color: AppColors.primary,
-              fontSize: 36,
-              fontWeight: FontWeight.w900,
-              fontStyle: FontStyle.italic,
-              letterSpacing: 2,
-            ),
+        ClipRRect(
+          borderRadius: BorderRadius.circular(8),
+          child: Image.asset(
+            AppConstants.logoBlack,
+            height: 90,
+            fit: BoxFit.contain,
           ),
         ),
         const SizedBox(height: 16),

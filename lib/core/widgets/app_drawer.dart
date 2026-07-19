@@ -1,5 +1,6 @@
 import 'package:flutter/material.dart';
 
+import '../constants/app_constants.dart';
 import '../theme/app_colors.dart';
 
 /// Shared navigation drawer widget for consistent app navigation.
@@ -120,20 +121,12 @@ class AppDrawer extends StatelessWidget {
       child: Column(
         crossAxisAlignment: CrossAxisAlignment.start,
         children: [
-          Container(
-            padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 8),
-            decoration: BoxDecoration(
-              color: Colors.black,
-              borderRadius: BorderRadius.circular(8),
-            ),
-            child: const Text(
-              'Supri',
-              style: TextStyle(
-                color: AppColors.primary,
-                fontSize: 24,
-                fontWeight: FontWeight.w900,
-                fontStyle: FontStyle.italic,
-              ),
+          ClipRRect(
+            borderRadius: BorderRadius.circular(4),
+            child: Image.asset(
+              AppConstants.logoBlackLandscape,
+              height: 40,
+              fit: BoxFit.contain,
             ),
           ),
           const SizedBox(height: 12),

@@ -19,4 +19,10 @@ class AppConstants {
 
   // Cache
   static const int cacheValidityHours = 24;
+
+  // Assets
+  static const String logoBlack = 'assets/images/supri_logo_black.jpeg';
+  static const String logoBlackLandscape = 'assets/images/supri_logo_black_landscape.jpeg';
+  static const String logoWhite = 'assets/images/supri_logo_white.jpeg';
+  static const String logoWhiteTall = 'assets/images/supri_logo_white_tall.jpeg';
 }
