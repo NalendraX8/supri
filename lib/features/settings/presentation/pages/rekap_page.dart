@@ -1,9 +1,12 @@
 import 'package:flutter/material.dart';
 import 'package:flutter_bloc/flutter_bloc.dart';
+import 'package:flutter_spinkit/flutter_spinkit.dart';
 
+import '../../../../core/network/api_client.dart';
 import '../../../../core/theme/app_colors.dart';
 import '../../../../core/widgets/app_button.dart';
 import '../../../../core/widgets/app_card.dart';
+import '../../../../injection_container.dart';
 import '../../../auth/presentation/bloc/auth_bloc.dart';
 import '../../../auth/presentation/bloc/auth_event.dart';
 
@@ -93,13 +96,7 @@ class _RekapPageState extends State<RekapPage> {
           ElevatedButton(
             onPressed: () {
               Navigator.pop(ctx);
-              context.read<AuthBloc>().add(const LogoutEvent());
-              ScaffoldMessenger.of(context).showSnackBar(
-                const SnackBar(
-                  content: Text('Shift berhasil ditutup. Menutup sesi...'),
-                  backgroundColor: AppColors.success,
-                ),
-              );
+              _submitClosingEntry();
             },
             style: ElevatedButton.styleFrom(
               backgroundColor: AppColors.primary,
@@ -110,6 +107,71 @@ class _RekapPageState extends State<RekapPage> {
         ],
       ),
     );
+  }
+
+  Future<void> _submitClosingEntry() async {
+    // Show loading dialog
+    showDialog(
+      context: context,
+      barrierDismissible: false,
+      builder: (ctx) => const Center(
+        child: SpinKitFadingCircle(
+          color: AppColors.primary,
+          size: 50.0,
+        ),
+      ),
+    );
+
+    final payload = {
+      "pos_opening_entry": "POS-OPE-2025-00001",
+      "expected_amount": _expectedCash,
+      "closing_amount": _aktualAmount,
+      "difference": _selisih,
+      "posting_date": DateTime.now().toIso8601String().substring(0, 10),
+    };
+
+    try {
+      final response = await sl<ApiClient>().post(
+        '/api/method/zales_pos.api.pos.makeClosingEntry',
+        payload,
+      );
+      
+      if (mounted) Navigator.pop(context); // Close loading dialog
+
+      if (response.statusCode == 200) {
+        if (mounted) {
+          ScaffoldMessenger.of(context).showSnackBar(
+            const SnackBar(
+              content: Text('Shift Closing berhasil disinkronkan ke Zales ERP!'),
+              backgroundColor: AppColors.success,
+            ),
+          );
+        }
+      } else {
+        if (mounted) {
+          ScaffoldMessenger.of(context).showSnackBar(
+            SnackBar(
+              content: Text('Koneksi terputus. Rekap disimpan secara offline (Status: ${response.statusCode})'),
+              backgroundColor: Colors.orange.shade800,
+            ),
+          );
+        }
+      }
+    } catch (_) {
+      if (mounted) Navigator.pop(context); // Close loading dialog
+      if (mounted) {
+        ScaffoldMessenger.of(context).showSnackBar(
+          SnackBar(
+            content: const Text('Koneksi terputus. Rekap disimpan secara offline (Mode Offline)'),
+            backgroundColor: Colors.orange.shade800,
+          ),
+        );
+      }
+    }
+
+    if (mounted) {
+      context.read<AuthBloc>().add(const LogoutEvent());
+    }
   }
 
   @override

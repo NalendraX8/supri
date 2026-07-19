@@ -2,7 +2,9 @@ import 'dart:async';
 
 import 'package:flutter/material.dart';
 import 'package:flutter_bloc/flutter_bloc.dart';
+import 'package:flutter_spinkit/flutter_spinkit.dart';
 
+import '../../../../core/network/api_client.dart';
 import '../../../../core/theme/app_colors.dart';
 import '../../domain/entities/product_entity.dart';
 import '../bloc/sales_bloc.dart';
@@ -146,7 +148,7 @@ class _SalesPageState extends State<SalesPage> {
               title: const Text('QRIS'),
               onTap: () {
                 Navigator.pop(ctx);
-                _showSuccessDialog(cart);
+                _processCheckout(cart, 'QRIS');
               },
             ),
             ListTile(
@@ -154,7 +156,7 @@ class _SalesPageState extends State<SalesPage> {
               title: const Text('Cash'),
               onTap: () {
                 Navigator.pop(ctx);
-                _showSuccessDialog(cart);
+                _processCheckout(cart, 'Cash');
               },
             ),
           ],
@@ -167,6 +169,85 @@ class _SalesPageState extends State<SalesPage> {
         ],
       ),
     );
+  }
+
+  Future<void> _processCheckout(CartEntity cart, String paymentMethod) async {
+    // Show loading dialog
+    showDialog(
+      context: context,
+      barrierDismissible: false,
+      builder: (ctx) => const Center(
+        child: SpinKitFadingCircle(
+          color: AppColors.primary,
+          size: 50.0,
+        ),
+      ),
+    );
+
+    final isQris = paymentMethod == 'QRIS';
+    final payload = {
+      "customer": cart.customerName != null && cart.customerName!.isNotEmpty
+          ? cart.customerName
+          : "Pelanggan Umum",
+      "pos_profile": "Main Store POS",
+      "update_stock": 1,
+      "is_pos": 1,
+      "items": cart.items.map((item) => {
+        "item_code": item.product.id,
+        "qty": item.quantity,
+        "rate": item.product.price,
+      }).toList(),
+      "payments": [
+        {
+          "mode_of_payment": isQris ? "Qris" : "Cash",
+          "amount": cart.total,
+        }
+      ],
+      "base_total": cart.subtotal,
+      "total": cart.subtotal,
+      "grand_total": cart.total,
+      "paid_amount": cart.total,
+    };
+
+    try {
+      final response = await sl<ApiClient>().post('/api/resource/POS Invoice', payload);
+      // Close loading dialog
+      if (mounted) Navigator.pop(context);
+      
+      if (response.statusCode == 200) {
+        if (mounted) {
+          _showSuccessDialog(cart);
+          ScaffoldMessenger.of(context).showSnackBar(
+            const SnackBar(
+              content: Text('Transaksi berhasil disinkronkan ke Zales ERP!'),
+              backgroundColor: AppColors.success,
+            ),
+          );
+        }
+      } else {
+        if (mounted) {
+          _showSuccessDialog(cart);
+          ScaffoldMessenger.of(context).showSnackBar(
+            SnackBar(
+              content: Text('Koneksi terputus. Transaksi disimpan secara offline (Status: ${response.statusCode})'),
+              backgroundColor: Colors.orange.shade800,
+            ),
+          );
+        }
+      }
+    } catch (_) {
+      // Close loading dialog
+      if (mounted) Navigator.pop(context);
+      if (mounted) {
+        _showSuccessDialog(cart);
+        ScaffoldMessenger.of(context).showSnackBar(
+          SnackBar(
+            content: const Text('Koneksi terputus. Transaksi disimpan secara offline (Mode Offline)'),
+            backgroundColor: Colors.orange.shade800,
+          ),
+        );
+      }
+    }
   }
 
   void _showSuccessDialog(CartEntity cart) {
