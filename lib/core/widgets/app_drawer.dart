@@ -2,6 +2,9 @@ import 'package:flutter/material.dart';
 
 import '../constants/app_constants.dart';
 import '../theme/app_colors.dart';
+import 'demo_badge.dart';
+import '../storage/settings_storage.dart';
+import '../../injection_container.dart';
 
 /// Shared navigation drawer widget for consistent app navigation.
 class AppDrawer extends StatelessWidget {
@@ -121,13 +124,27 @@ class AppDrawer extends StatelessWidget {
       child: Column(
         crossAxisAlignment: CrossAxisAlignment.start,
         children: [
-          ClipRRect(
-            borderRadius: BorderRadius.circular(4),
-            child: Image.asset(
-              AppConstants.logoBlackLandscape,
-              height: 40,
-              fit: BoxFit.contain,
-            ),
+          Row(
+            mainAxisAlignment: MainAxisAlignment.spaceBetween,
+            children: [
+              ClipRRect(
+                borderRadius: BorderRadius.circular(4),
+                child: Image.asset(
+                  AppConstants.logoBlackLandscape,
+                  height: 40,
+                  fit: BoxFit.contain,
+                ),
+              ),
+              FutureBuilder<String>(
+                future: sl<SettingsStorage>().getMode(),
+                builder: (context, snapshot) {
+                  if (snapshot.hasData && snapshot.data == 'demo') {
+                    return const DemoBadge();
+                  }
+                  return const SizedBox.shrink();
+                },
+              ),
+            ],
           ),
           const SizedBox(height: 12),
           Text(

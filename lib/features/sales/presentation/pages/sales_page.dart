@@ -15,6 +15,9 @@ import '../widgets/discount_dialog.dart';
 import '../widgets/product_card.dart';
 import '../widgets/product_skeleton.dart';
 import '../widgets/receipt_dialog.dart';
+import '../../../../core/widgets/demo_badge.dart';
+import '../../../../core/storage/settings_storage.dart';
+import '../../../../injection_container.dart';
 
 /// Main Sales/Home page - the primary POS screen with static data.
 class SalesPage extends StatefulWidget {
@@ -231,6 +234,18 @@ class _SalesPageState extends State<SalesPage> {
       appBar: AppBar(
         title: const Text('SUPRI'),
         actions: [
+          FutureBuilder<String>(
+            future: sl<SettingsStorage>().getMode(),
+            builder: (context, snapshot) {
+              if (snapshot.hasData && snapshot.data == 'demo') {
+                return const Padding(
+                  padding: EdgeInsets.only(right: 8.0),
+                  child: DemoBadge(),
+                );
+              }
+              return const SizedBox.shrink();
+            },
+          ),
           IconButton(
             icon: const Icon(Icons.shopping_cart_outlined),
             onPressed: () {

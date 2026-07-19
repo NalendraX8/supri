@@ -1,14 +1,16 @@
 import 'package:flutter/material.dart';
 import 'package:flutter_bloc/flutter_bloc.dart';
 
+import '../../../../core/storage/settings_storage.dart';
 import '../../../../core/theme/app_colors.dart';
 import '../../../../core/widgets/app_button.dart';
 import '../../../../core/widgets/app_card.dart';
+import '../../../../injection_container.dart';
 import '../../../auth/presentation/bloc/auth_bloc.dart';
 import '../../../auth/presentation/bloc/auth_event.dart';
 
 /// Settings page.
-class SettingsPage extends StatelessWidget {
+class SettingsPage extends StatefulWidget {
   final VoidCallback? onNavigateToSales;
   final VoidCallback? onNavigateToHistory;
   final VoidCallback? onNavigateToKas;
@@ -23,6 +25,27 @@ class SettingsPage extends StatelessWidget {
     this.onNavigateToRekap,
     this.onLogout,
   });
+
+  @override
+  State<SettingsPage> createState() => _SettingsPageState();
+}
+
+class _SettingsPageState extends State<SettingsPage> {
+  final _storage = sl<SettingsStorage>();
+  String _activeMode = 'production';
+
+  @override
+  void initState() {
+    super.initState();
+    _loadSettings();
+  }
+
+  Future<void> _loadSettings() async {
+    final mode = await _storage.getMode();
+    setState(() {
+      _activeMode = mode;
+    });
+  }
 
   @override
   Widget build(BuildContext context) {
@@ -93,13 +116,25 @@ class SettingsPage extends StatelessWidget {
                   ),
                 ),
                 const SizedBox(width: 16),
-                const Expanded(
-                  child: Text(
-                    'MODE',
-                    style: TextStyle(
-                      fontSize: 16,
-                      fontWeight: FontWeight.w600,
-                    ),
+                Expanded(
+                  child: Column(
+                    crossAxisAlignment: CrossAxisAlignment.start,
+                    children: [
+                      const Text(
+                        'MODE',
+                        style: TextStyle(
+                          fontSize: 16,
+                          fontWeight: FontWeight.w600,
+                        ),
+                      ),
+                      Text(
+                        _activeMode.toUpperCase(),
+                        style: const TextStyle(
+                          fontSize: 12,
+                          color: AppColors.grey500,
+                        ),
+                      ),
+                    ],
                   ),
                 ),
                 const Icon(Icons.chevron_right, color: AppColors.grey400),
@@ -120,41 +155,65 @@ class SettingsPage extends StatelessWidget {
   }
 
   void _showModeDialog(BuildContext context) {
+    String tempMode = _activeMode;
+
     showDialog(
       context: context,
-      builder: (context) => AlertDialog(
-        title: const Text('Select Mode'),
-        content: Column(
-          mainAxisSize: MainAxisSize.min,
-          children: [
-            ListTile(
-              title: const Text('Production'),
-              leading: Radio<String>(
+      builder: (ctx) => StatefulBuilder(
+        builder: (ctx, setDialogState) => AlertDialog(
+          title: const Text('Select Mode'),
+          content: Column(
+            mainAxisSize: MainAxisSize.min,
+            children: [
+              RadioListTile<String>(
+                title: const Text('Production'),
                 value: 'production',
-                groupValue: 'production',
-                onChanged: (_) {},
+                groupValue: tempMode,
+                activeColor: AppColors.primary,
+                onChanged: (val) {
+                  if (val != null) {
+                    setDialogState(() => tempMode = val);
+                  }
+                },
               ),
-            ),
-            ListTile(
-              title: const Text('Demo'),
-              leading: Radio<String>(
+              RadioListTile<String>(
+                title: const Text('Demo'),
                 value: 'demo',
-                groupValue: 'production',
-                onChanged: (_) {},
+                groupValue: tempMode,
+                activeColor: AppColors.primary,
+                onChanged: (val) {
+                  if (val != null) {
+                    setDialogState(() => tempMode = val);
+                  }
+                },
               ),
+            ],
+          ),
+          actions: [
+            TextButton(
+              onPressed: () => Navigator.pop(ctx),
+              child: const Text('CANCEL'),
+            ),
+            ElevatedButton(
+              onPressed: () async {
+                await _storage.setMode(tempMode);
+                setState(() {
+                  _activeMode = tempMode;
+                });
+                if (context.mounted) {
+                  Navigator.pop(ctx);
+                  ScaffoldMessenger.of(context).showSnackBar(
+                    SnackBar(
+                      content: Text('App mode updated to ${_activeMode.toUpperCase()}'),
+                      backgroundColor: AppColors.success,
+                    ),
+                  );
+                }
+              },
+              child: const Text('SAVE'),
             ),
           ],
         ),
-        actions: [
-          TextButton(
-            onPressed: () => Navigator.pop(context),
-            child: const Text('CANCEL'),
-          ),
-          ElevatedButton(
-            onPressed: () => Navigator.pop(context),
-            child: const Text('SAVE'),
-          ),
-        ],
       ),
     );
   }

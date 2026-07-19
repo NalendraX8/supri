@@ -1,6 +1,7 @@
 import 'package:get_it/get_it.dart';
 
 import 'core/network/mock_product_datasource.dart';
+import 'core/storage/settings_storage.dart';
 import 'features/auth/presentation/bloc/auth_bloc.dart';
 import 'features/auth/data/datasources/auth_remote_datasource.dart';
 import 'features/auth/data/repositories/auth_repository_impl.dart';
@@ -17,6 +18,7 @@ final sl = GetIt.instance;
 Future<void> initDependencies() async {
   // Mock data sources
   sl.registerLazySingleton(() => MockProductDataSource());
+  sl.registerLazySingleton(() => SettingsStorage());
 
   // Data sources
   sl.registerLazySingleton<AuthRemoteDataSource>(
