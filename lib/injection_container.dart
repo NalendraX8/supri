@@ -29,7 +29,7 @@ Future<void> initDependencies() async {
     () => AuthRemoteDataSource(),
   );
   sl.registerLazySingleton<ProductRemoteDataSource>(
-    () => ProductRemoteDataSource(apiClient: sl(), mockDataSource: sl()),
+    () => ProductRemoteDataSource(apiClient: sl()),
   );
 
   // Repositories

@@ -29,17 +29,15 @@ class _OutletSelectionPageState extends State<OutletSelectionPage> {
   }
 
   Future<List<String>> _fetchPOSProfiles() async {
-    try {
-      final response = await sl<ApiClient>().get('/api/resource/POS Profile?fields=["name"]');
-      if (response.statusCode == 200) {
-        final data = json.decode(response.body);
-        final List<dynamic> profiles = data['data'] ?? [];
-        if (profiles.isNotEmpty) {
-          return profiles.map((p) => p['name'] as String).toList();
-        }
+    final response = await sl<ApiClient>().get('/api/resource/POS Profile?fields=["name"]');
+    if (response.statusCode == 200) {
+      final data = json.decode(response.body);
+      final List<dynamic> profiles = data['data'] ?? [];
+      if (profiles.isNotEmpty) {
+        return profiles.map((p) => p['name'] as String).toList();
       }
-    } catch (_) {}
-    return ['Solo Baru', 'Banjarsani', 'Honggowongso']; // Fallback
+    }
+    throw Exception('Failed to load POS Profiles (Status: ${response.statusCode})');
   }
 
   @override
@@ -89,7 +87,33 @@ class _OutletSelectionPageState extends State<OutletSelectionPage> {
                         );
                       }
                       
-                      final outlets = snapshot.data ?? ['Solo Baru', 'Banjarsani', 'Honggowongso'];
+                      if (snapshot.hasError) {
+                        return Center(
+                          child: Padding(
+                            padding: const EdgeInsets.all(16.0),
+                            child: Column(
+                              mainAxisAlignment: MainAxisAlignment.center,
+                              children: [
+                                const Icon(Icons.error_outline, color: AppColors.error, size: 48),
+                                const SizedBox(height: 16),
+                                Text(
+                                  'Gagal memuat outlet: ${snapshot.error}',
+                                  textAlign: TextAlign.center,
+                                  style: const TextStyle(color: AppColors.error),
+                                ),
+                              ],
+                            ),
+                          ),
+                        );
+                      }
+
+                      final outlets = snapshot.data ?? [];
+                      if (outlets.isEmpty) {
+                        return const Center(
+                          child: Text('Tidak ada outlet yang tersedia'),
+                        );
+                      }
+
                       return ListView.builder(
                         itemCount: outlets.length,
                         itemBuilder: (context, index) {
