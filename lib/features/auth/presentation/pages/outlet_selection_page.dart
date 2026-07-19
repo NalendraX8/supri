@@ -1,16 +1,46 @@
+import 'dart:convert';
 import 'package:flutter/material.dart';
 import 'package:flutter_bloc/flutter_bloc.dart';
-
 import 'package:flutter_spinkit/flutter_spinkit.dart';
+
+import '../../../../core/network/api_client.dart';
 import '../../../../core/theme/app_colors.dart';
 import '../../../../core/widgets/app_card.dart';
+import '../../../../injection_container.dart';
 import '../bloc/auth_bloc.dart';
 import '../bloc/auth_event.dart';
 import '../bloc/auth_state.dart';
 
 /// Outlet selection page after login.
-class OutletSelectionPage extends StatelessWidget {
+class OutletSelectionPage extends StatefulWidget {
   const OutletSelectionPage({super.key});
+
+  @override
+  State<OutletSelectionPage> createState() => _OutletSelectionPageState();
+}
+
+class _OutletSelectionPageState extends State<OutletSelectionPage> {
+  late final Future<List<String>> _outletsFuture;
+
+  @override
+  void initState() {
+    super.initState();
+    _outletsFuture = _fetchPOSProfiles();
+  }
+
+  Future<List<String>> _fetchPOSProfiles() async {
+    try {
+      final response = await sl<ApiClient>().get('/api/resource/POS Profile?fields=["name"]');
+      if (response.statusCode == 200) {
+        final data = json.decode(response.body);
+        final List<dynamic> profiles = data['data'] ?? [];
+        if (profiles.isNotEmpty) {
+          return profiles.map((p) => p['name'] as String).toList();
+        }
+      }
+    } catch (_) {}
+    return ['Solo Baru', 'Banjarsani', 'Honggowongso']; // Fallback
+  }
 
   @override
   Widget build(BuildContext context) {
@@ -45,25 +75,35 @@ class OutletSelectionPage extends StatelessWidget {
                   textAlign: TextAlign.center,
                 ),
                 const SizedBox(height: 32),
-                // Outlet List
+                // Outlet List from API
                 Expanded(
-                  child: ListView(
-                    children: [
-                      _OutletCard(
-                        name: 'Solo Baru',
-                        onTap: () => _selectOutlet(context, 'outlet_001', 'Solo Baru'),
-                      ),
-                      const SizedBox(height: 12),
-                      _OutletCard(
-                        name: 'Banjarsani',
-                        onTap: () => _selectOutlet(context, 'outlet_002', 'Banjarsani'),
-                      ),
-                      const SizedBox(height: 12),
-                      _OutletCard(
-                        name: 'Honggowongso',
-                        onTap: () => _selectOutlet(context, 'outlet_003', 'Honggowongso'),
-                      ),
-                    ],
+                  child: FutureBuilder<List<String>>(
+                    future: _outletsFuture,
+                    builder: (context, snapshot) {
+                      if (snapshot.connectionState == ConnectionState.waiting) {
+                        return Center(
+                          child: SpinKitFadingCircle(
+                            color: AppColors.primary,
+                            size: 40.0,
+                          ),
+                        );
+                      }
+                      
+                      final outlets = snapshot.data ?? ['Solo Baru', 'Banjarsani', 'Honggowongso'];
+                      return ListView.builder(
+                        itemCount: outlets.length,
+                        itemBuilder: (context, index) {
+                          final name = outlets[index];
+                          return Padding(
+                            padding: const EdgeInsets.only(bottom: 12.0),
+                            child: _OutletCard(
+                              name: name,
+                              onTap: () => _selectOutlet(context, 'outlet_$index', name),
+                            ),
+                          );
+                        },
+                      );
+                    },
                   ),
                 ),
               ],
