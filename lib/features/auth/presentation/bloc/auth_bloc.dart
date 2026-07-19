@@ -1,5 +1,6 @@
 import 'package:flutter_bloc/flutter_bloc.dart';
 
+import '../../../../core/error/exceptions.dart';
 import '../../../../core/storage/session_storage.dart';
 import '../../domain/entities/auth_entity.dart';
 import '../../domain/repositories/auth_repository.dart';
@@ -53,7 +54,10 @@ class AuthBloc extends Bloc<AuthEvent, AuthState> {
       ));
       emit(AuthAuthenticated(auth: auth, needsOutletSelection: true));
     } catch (e) {
-      emit(AuthError(e.toString()));
+      final message = e is ServerException
+          ? e.message
+          : e.toString().replaceAll('Exception: ', '').replaceAll('ServerException: ', '');
+      emit(AuthError(message));
     }
   }
 
